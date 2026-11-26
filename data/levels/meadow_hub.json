@@ -1,0 +1,57 @@
+{
+  "id": "meadow_hub",
+  "name": "Meadow Hub",
+  "theme": "meadow",
+  "ambient_type": "fireflies",
+  "grid": [
+    "#############################################",
+    "#                                           #",
+    "#                                           #",
+    "#                                           #",
+    "#                                           #",
+    "#            *                              #",
+    "#          #####                            #",
+    "#                                           #",
+    "#                ===    ===                 #",
+    "#                                           #",
+    "#  ===                   ===       =======  #",
+    "#       ===                                 #",
+    "#           G   G           ^               #",
+    "#          =======         ===   G    G     #",
+    "#   P             G     G       ===  ===    #",
+    "########################~~~##################",
+    "#############################################",
+    "#############################################"
+  ],
+  "spawns": {
+    "start": [4, 14],
+    "shrine": [7, 14],
+    "from_canopy": [41, 9],
+    "from_ruins": [39, 14]
+  },
+  "shrines": [
+    { "shrine_id": "shrine_meadow", "name": "Meadow Hearth Shrine", "col": 6, "row": 14 }
+  ],
+  "npcs": [
+    { "npc_id": "grandma_willow", "name": "Grandma Willow", "dialogue_id": "grandma_willow", "col": 11, "row": 14, "style": "willow" },
+    { "npc_id": "pip_merchant", "name": "Pip the Merchant", "dialogue_id": "pip_merchant", "col": 20, "row": 14, "style": "frog" }
+  ],
+  "signs": [
+    { "col": 17, "row": 14, "text": "Welcome to Meadow Hub! Jump with [Space], talk or enter doors with [E], open your Backpack with [Tab], and open the Fast-Travel Map with [M]." }
+  ],
+  "portals": [
+    { "target_level": "canopy_cliffs", "target_spawn": "from_meadow", "label": "To Canopy Cliffs", "col": 41, "row": 9 },
+    { "target_level": "sunken_ruins", "target_spawn": "from_meadow", "label": "To Sunken Ruins", "col": 42, "row": 14 }
+  ],
+  "trinkets": [
+    { "trinket_id": "dewdrop_bell", "col": 14, "row": 5 }
+  ],
+  "decor": [
+    { "kind": "tree", "col": 2, "row": 14 },
+    { "kind": "flower", "col": 9, "row": 14 },
+    { "kind": "lantern", "col": 13, "row": 14 },
+    { "kind": "tree", "col": 22, "row": 14 },
+    { "kind": "flower", "col": 35, "row": 14 },
+    { "kind": "lantern", "col": 40, "row": 9 }
+  ]
+}

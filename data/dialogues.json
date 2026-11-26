@@ -1,0 +1,175 @@
+{
+  "grandma_willow": {
+    "start": "greeting",
+    "entry_rules": [
+      {
+        "condition": { "trinket_count_gte": 4, "not_flag": "willow_all_trinkets" },
+        "node": "all_trinkets"
+      },
+      {
+        "condition": { "flag": "willow_gift" },
+        "node": "returning"
+      }
+    ],
+    "nodes": {
+      "greeting": {
+        "text": "Good day, little sprout! Isn't the meadow air sweet today? Press [Tab] anytime to peek in your backpack, or [M] to view the shrine map.",
+        "choices": [
+          { "label": "Ask about Gems", "next": "about_gems" },
+          { "label": "I'm ready to explore!", "next": "gift" }
+        ]
+      },
+      "about_gems": {
+        "text": "Shiny teal and golden gems dot the cliffs and ruins. Pip over by the signpost trades them for handy badges—like a Feather Badge for Double Jumping!",
+        "choices": [
+          { "label": "Thanks, Grandma!", "next": "gift" }
+        ]
+      },
+      "gift": {
+        "text": "Here—take a few pocket gems from my tea jar so you can try out Pip's shop right away. Stay cozy out there!",
+        "effects": [
+          { "type": "set_flag", "flag": "willow_gift", "value": true },
+          { "type": "give_gems", "amount": 5 },
+          { "type": "save" }
+        ],
+        "choices": [
+          { "label": "Thank you!", "close": true }
+        ]
+      },
+      "returning": {
+        "text": "Take your time hopping between the meadow, canopy, and ruins. There's no rush at all—if you slip into a stream, you'll puff right back onto safe ground.",
+        "choices": [
+          { "label": "Any tips on Shrines?", "next": "shrines" },
+          { "label": "See you soon!", "close": true }
+        ]
+      },
+      "shrines": {
+        "text": "Each region holds a stone lantern Shrine. Attune it once with [E], and you can fast-travel right back from your [M] Map anytime!",
+        "choices": [
+          { "label": "Got it!", "close": true }
+        ]
+      },
+      "all_trinkets": {
+        "text": "My goodness—you found all four lost trinkets across the valley! You have the heart of a true cozy explorer. Take these celebratory Star Gems!",
+        "effects": [
+          { "type": "set_flag", "flag": "willow_all_trinkets", "value": true },
+          { "type": "give_gems", "amount": 15 },
+          { "type": "save" }
+        ],
+        "choices": [
+          { "label": "Hooray!", "close": true }
+        ]
+      }
+    }
+  },
+  "pip_merchant": {
+    "start": "welcome",
+    "nodes": {
+      "welcome": {
+        "text": "Ribbit! Welcome to Pip's Traveling Satchel! I've got Feather Badges, Breeze Dashes, Clover Boots, and sparkly trails for fair gem prices!",
+        "choices": [
+          { "label": "Browse Shop", "open_shop": true },
+          { "label": "Just chatting", "next": "chat" },
+          { "label": "Maybe later", "close": true }
+        ]
+      },
+      "chat": {
+        "text": "Everything I sell snaps right onto your cloak as a Badge. You can toggle abilities or swap cosmetic trails anytime in your [Tab] Backpack!",
+        "choices": [
+          { "label": "Open Shop", "open_shop": true },
+          { "label": "Thanks, Pip!", "close": true }
+        ]
+      }
+    }
+  },
+  "bramble_fox": {
+    "start": "intro",
+    "entry_rules": [
+      {
+        "condition": { "trinket_count_gte": 2, "not_flag": "bramble_reward" },
+        "node": "cartographer_gift"
+      },
+      {
+        "condition": { "flag": "bramble_reward" },
+        "node": "post_gift"
+      }
+    ],
+    "nodes": {
+      "intro": {
+        "text": "Ahoy, fellow wanderer! I'm sketching the Canopy Cliffs. Don't miss the Canopy Shrine up on the middle bough—it'll link straight to your [M] Map!",
+        "choices": [
+          { "label": "Any secrets nearby?", "next": "secret" },
+          { "label": "Good luck mapping!", "close": true }
+        ]
+      },
+      "secret": {
+        "text": "Rumour says a Mossy Compass sits atop the highest eastern branch. A bouncy mushroom and a Feather Badge will get you right up there!",
+        "choices": [
+          { "label": "I'll look for it!", "close": true }
+        ]
+      },
+      "cartographer_gift": {
+        "text": "Whoa—you've already tracked down two rare trinkets! As one cartographer to another, please take my spare Starlight Trail badge!",
+        "effects": [
+          { "type": "set_flag", "flag": "bramble_reward", "value": true },
+          { "type": "give_badge", "badge_id": "starlight_trail", "category": "trail" },
+          { "type": "save" }
+        ],
+        "choices": [
+          { "label": "Ooh, shiny!", "close": true }
+        ]
+      },
+      "post_gift": {
+        "text": "The twilight breeze feels amazing up here, doesn't it? Keep charting every nook!",
+        "choices": [
+          { "label": "Will do!", "close": true }
+        ]
+      }
+    }
+  },
+  "luma_spirit": {
+    "start": "whisper",
+    "entry_rules": [
+      {
+        "condition": { "has_trinket": "starlight_lantern", "not_flag": "luma_charm" },
+        "node": "lantern_joy"
+      },
+      {
+        "condition": { "flag": "luma_charm" },
+        "node": "peaceful"
+      }
+    ],
+    "nodes": {
+      "whisper": {
+        "text": "Hush, warm little sprout... The Sunken Ruins glow brightest when travelers carry our lost Starlight Lantern. Have you spotted it high above?",
+        "choices": [
+          { "label": "Where is it?", "next": "hint" },
+          { "label": "I'll keep looking", "close": true }
+        ]
+      },
+      "hint": {
+        "text": "Follow the glowing mushroom pads up to the western stone arch. And don't forget to attune the Ruins Shrine right beside me!",
+        "choices": [
+          { "label": "Thank you, Luma", "close": true }
+        ]
+      },
+      "lantern_joy": {
+        "text": "Oh! You found the Starlight Lantern! Its gentle hum warms the whole cavern. Let me bless your satchel with a Magnet Charm!",
+        "effects": [
+          { "type": "set_flag", "flag": "luma_charm", "value": true },
+          { "type": "give_badge", "badge_id": "magnet_charm", "category": "ability" },
+          { "type": "save" }
+        ],
+        "choices": [
+          { "label": "Thank you so much!", "close": true }
+        ]
+      },
+      "peaceful": {
+        "text": "May the fireflies always light your ledges, little traveler.",
+        "choices": [
+          { "label": "Stay cozy, Luma", "close": true }
+        ]
+      }
+    }
+  }
+}
