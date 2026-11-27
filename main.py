@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import sys
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from core.state import StateManager
 from states.play_state import PlayState
 
 
-def main() -> None:
+async def main() -> None:
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
     pygame.display.set_caption(GAME_TITLE)
@@ -41,9 +42,11 @@ def main() -> None:
         manager.update(dt)
         manager.render(screen)
         pygame.display.flip()
+        await asyncio.sleep(0)
 
     pygame.quit()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
+
