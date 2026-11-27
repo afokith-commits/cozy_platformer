@@ -1,0 +1,125 @@
+{
+  "chapters": [
+    {
+      "id": "ch1_hearth",
+      "title": "Awaken the Hearth",
+      "summary": "Get your bearings in Meadow Hub, meet the locals, and attune your first distant shrine.",
+      "objectives": [
+        {
+          "id": "talk_willow",
+          "label": "Speak with Grandma Willow in Meadow Hub",
+          "rule": { "type": "flag", "flag": "willow_gift" }
+        },
+        {
+          "id": "get_first_badge",
+          "label": "Unlock your first Badge from Pip's Shop",
+          "rule": { "type": "badge_count_gte", "count": 1 }
+        },
+        {
+          "id": "attune_canopy",
+          "label": "Attune the Canopy Bough Shrine",
+          "rule": { "type": "shrine", "shrine_id": "shrine_canopy" }
+        }
+      ]
+    },
+    {
+      "id": "ch2_lanterns",
+      "title": "Lanterns in the Mist",
+      "summary": "Descend into the twilight Sunken Ruins and aid Luma the Firefly Spirit.",
+      "objectives": [
+        {
+          "id": "attune_ruins",
+          "label": "Attune the Twilight Ruins Shrine",
+          "rule": { "type": "shrine", "shrine_id": "shrine_ruins" }
+        },
+        {
+          "id": "find_lantern",
+          "label": "Recover the Starlight Lantern in Sunken Ruins",
+          "rule": { "type": "trinket", "trinket_id": "starlight_lantern" }
+        },
+        {
+          "id": "luma_blessing",
+          "label": "Return the Lantern to Luma the Spirit",
+          "rule": { "type": "flag", "flag": "luma_charm" }
+        }
+      ]
+    },
+    {
+      "id": "ch3_spire",
+      "title": "The Sunlit Spire",
+      "summary": "Ascend above Canopy Cliffs to the golden Sunlit Spire and meet Sol the Skyweaver.",
+      "objectives": [
+        {
+          "id": "attune_spire",
+          "label": "Attune the Spire Summit Shrine",
+          "rule": { "type": "shrine", "shrine_id": "shrine_spire" }
+        },
+        {
+          "id": "sol_glider",
+          "label": "Receive the Leaf Glider from Sol the Skyweaver",
+          "rule": { "type": "flag", "flag": "sol_glider" }
+        },
+        {
+          "id": "find_prism",
+          "label": "Collect the Sunstone Prism atop the Spire",
+          "rule": { "type": "trinket", "trinket_id": "sunstone_prism" }
+        }
+      ]
+    },
+    {
+      "id": "ch4_festival",
+      "title": "Festival of Sprouts",
+      "summary": "With all four valley shrines lit, return to Grandma Willow to celebrate the Festival!",
+      "objectives": [
+        {
+          "id": "all_shrines",
+          "label": "Attune all 4 Shrines across the Valley",
+          "rule": { "type": "shrine_count_gte", "count": 4 }
+        },
+        {
+          "id": "willow_festival",
+          "label": "Celebrate the Festival with Grandma Willow",
+          "rule": { "type": "flag", "flag": "festival_complete" }
+        }
+      ]
+    }
+  ],
+  "map_nodes": [
+    {
+      "level_id": "meadow_hub",
+      "shrine_id": "shrine_meadow",
+      "spawn_id": "shrine",
+      "name": "Meadow Hub",
+      "subtitle": "Warm hearth, Pip's stall, and Grandma Willow's garden.",
+      "pos": [350, 385],
+      "color": [106, 158, 92]
+    },
+    {
+      "level_id": "canopy_cliffs",
+      "shrine_id": "shrine_canopy",
+      "spawn_id": "shrine",
+      "name": "Canopy Cliffs",
+      "subtitle": "Breezy treetop bridges, bounce mushrooms, and Bramble's lookout.",
+      "pos": [555, 280],
+      "color": [109, 191, 194]
+    },
+    {
+      "level_id": "sunken_ruins",
+      "shrine_id": "shrine_ruins",
+      "spawn_id": "shrine",
+      "name": "Sunken Ruins",
+      "subtitle": "Twilight mossy arches lit by firefly spirits and ancient lanterns.",
+      "pos": [865, 385],
+      "color": [132, 97, 156]
+    },
+    {
+      "level_id": "sunlit_spire",
+      "shrine_id": "shrine_spire",
+      "spawn_id": "shrine",
+      "name": "Sunlit Spire",
+      "subtitle": "Golden-hour cloud-top sanctuary home to Sol the Skyweaver.",
+      "pos": [700, 175],
+      "color": [244, 192, 78]
+    }
+  ]
+}

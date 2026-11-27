@@ -1,0 +1,658 @@
+/**
+ * Game Data Definitions (Items, Badges, Dialogues, Levels, Save Management)
+ */
+
+export interface ItemDef {
+  name: string;
+  price?: number;
+  description: string;
+  hint?: string;
+  color?: number[];
+}
+
+export interface ItemsCatalog {
+  abilities: Record<string, ItemDef>;
+  trails: Record<string, ItemDef>;
+  trinkets: Record<string, ItemDef>;
+}
+
+export interface DialogueChoice {
+  label: string;
+  next?: string;
+  close?: boolean;
+  open_shop?: boolean;
+}
+
+export interface DialogueEffect {
+  type: string;
+  flag?: string;
+  value?: boolean;
+  amount?: number;
+  badge_id?: string;
+  category?: string;
+}
+
+export interface DialogueNode {
+  text: string;
+  choices?: DialogueChoice[];
+  effects?: DialogueEffect[];
+}
+
+export interface DialogueTree {
+  start: string;
+  entry_rules?: Array<{
+    condition: {
+      trinket_count_gte?: number;
+      has_trinket?: string;
+      flag?: string;
+      not_flag?: string;
+    };
+    node: string;
+  }>;
+  nodes: Record<string, DialogueNode>;
+}
+
+export interface LevelData {
+  id: string;
+  name: string;
+  theme: string;
+  ambient_type: string;
+  grid: string[];
+  spawns: Record<string, [number, number]>;
+  shrines?: Array<{ shrine_id: string; name: string; col: number; row: number }>;
+  npcs?: Array<{ npc_id: string; name: string; dialogue_id: string; col: number; row: number; style?: string }>;
+  signs?: Array<{ col: number; row: number; text: string }>;
+  portals?: Array<{ target_level: string; target_spawn: string; label: string; col: number; row: number }>;
+  trinkets?: Array<{ trinket_id: string; col: number; row: number }>;
+  decor?: Array<{ kind: string; col: number; row: number }>;
+}
+
+export class GameProgress {
+  public gems = 0;
+  public collected_gems: string[] = [];
+  public trinkets: string[] = [];
+  public unlocked_badges: string[] = [];
+  public equipped_badges: string[] = [];
+  public unlocked_shrines: string[] = [];
+  public flags: Record<string, boolean> = {};
+  public current_level = "meadow_hub";
+  public spawn_id = "start";
+  public sfx_volume = 0.65;
+  public music_volume = 0.45;
+
+  constructor() {
+    this.load();
+  }
+
+  public isEquipped(badgeId: string): boolean {
+    return this.equipped_badges.includes(badgeId);
+  }
+
+  public isUnlocked(badgeId: string): boolean {
+    return this.unlocked_badges.includes(badgeId);
+  }
+
+  public hasTrinket(trinketId: string): boolean {
+    return this.trinkets.includes(trinketId);
+  }
+
+  public save() {
+    try {
+      localStorage.setItem("sproutbound_save", JSON.stringify(this));
+    } catch {
+      // LocalStorage fallback
+    }
+  }
+
+  public load() {
+    try {
+      const dataStr = localStorage.getItem("sproutbound_save");
+      if (dataStr) {
+        const data = JSON.parse(dataStr);
+        Object.assign(this, data);
+      }
+    } catch {
+      // LocalStorage fallback
+    }
+  }
+
+  public reset() {
+    localStorage.removeItem("sproutbound_save");
+    this.gems = 0;
+    this.collected_gems = [];
+    this.trinkets = [];
+    this.unlocked_badges = [];
+    this.equipped_badges = [];
+    this.unlocked_shrines = [];
+    this.flags = {};
+    this.current_level = "meadow_hub";
+    this.spawn_id = "start";
+    this.save();
+  }
+}
+
+export const ITEMS_DATA: ItemsCatalog = {
+  abilities: {
+    feather_badge: {
+      name: "Feather Badge",
+      price: 8,
+      description: "Grants a graceful mid-air Double Jump! Great for reaching high treetops and secret ledges.",
+      hint: "Available in Pip's Cozy Curiosity Shop for 8 Gems."
+    },
+    breeze_dash: {
+      name: "Breeze Dash",
+      price: 12,
+      description: "Press [Shift] or [X] to dart forward on a gentle gust of wind across wide gaps.",
+      hint: "Available in Pip's Cozy Curiosity Shop for 12 Gems."
+    },
+    clover_boots: {
+      name: "Clover Boots",
+      price: 10,
+      description: "Increases walking speed and acceleration by ~30% for breezy meadow sprints.",
+      hint: "Available in Pip's Cozy Curiosity Shop for 10 Gems."
+    },
+    magnet_charm: {
+      name: "Magnet Charm",
+      price: 14,
+      description: "Softly pulls nearby gems right into your satchel as you hop past.",
+      hint: "Available in Pip's Shop—or chat with Luma in the Sunken Ruins!"
+    },
+    glide_leaf: {
+      name: "Leaf Glider",
+      price: 0,
+      description: "Hold [Space] while falling to float gently on a maple breeze across high cliffs.",
+      hint: "Gifted by Sol the Skyweaver atop the Sunlit Spire."
+    }
+  },
+  trails: {
+    sparkle_trail: {
+      name: "Sparkle Trail",
+      price: 6,
+      description: "Cosmetic Badge: Leaves a warm trail of golden sparkles behind your footsteps.",
+      hint: "Available in Pip's Cozy Curiosity Shop for 6 Gems."
+    },
+    petal_trail: {
+      name: "Blossom Petal Trail",
+      price: 6,
+      description: "Cosmetic Badge: Scatters soft pink & sage meadow petals as you leap.",
+      hint: "Available in Pip's Cozy Curiosity Shop for 6 Gems."
+    },
+    starlight_trail: {
+      name: "Starlight Trail",
+      price: 8,
+      description: "Cosmetic Badge: Shimmering twilight dust trails behind you in mid-air.",
+      hint: "Available in Pip's Shop—or help Bramble the Fox in Canopy Cliffs!"
+    },
+    festival_crown: {
+      name: "Sprout Festival Halo",
+      price: 0,
+      description: "Campaign Reward: A radiant golden festival aura celebrating the unity of all four shrines!",
+      hint: "Awarded by Grandma Willow when all 4 Shrines are attuned."
+    }
+  },
+  trinkets: {
+    dewdrop_bell: {
+      name: "Dewdrop Bell",
+      color: [128, 224, 226],
+      description: "A tiny glass bell from the Meadow Overlook that rings softly whenever morning mist rolls in.",
+      hint: "Hidden high above Meadow Hub—try bouncing up the mossy platforms!"
+    },
+    mossy_compass: {
+      name: "Mossy Compass",
+      color: [146, 206, 121],
+      description: "An old brass pocket compass overgrown with clover. Its needle always points toward warm tea.",
+      hint: "Tucked on the highest branch of Canopy Cliffs."
+    },
+    starlight_lantern: {
+      name: "Starlight Lantern",
+      color: [255, 224, 122],
+      description: "A palm-sized lantern humming with bottled twilight from the upper Sunken Ruins.",
+      hint: "Resting on an upper stone arch in the Sunken Ruins."
+    },
+    fossil_acorn: {
+      name: "Amber Acorn",
+      color: [229, 142, 92],
+      description: "A prehistoric golden acorn preserved in warm amber, prized by forest cartographers.",
+      hint: "Across the quiet subterranean pool in the Sunken Ruins."
+    },
+    sunstone_prism: {
+      name: "Sunstone Prism",
+      color: [255, 198, 94],
+      description: "A warm golden crystal that splits afternoon sunbeams into cozy rainbows.",
+      hint: "Perched on the western sky-arch of the Sunlit Spire."
+    },
+    skyward_bell: {
+      name: "Skyward Chime",
+      color: [176, 232, 255],
+      description: "A wind-chime woven by Sol from cloud-silk and brass, singing softly in high breezes.",
+      hint: "Tucked on the eastern cloud terrace of the Sunlit Spire."
+    }
+  }
+};
+
+export const DIALOGUES_DATA: Record<string, DialogueTree> = {
+  grandma_willow: {
+    start: "greeting",
+    entry_rules: [
+      {
+        condition: { shrine_count_gte: 4, not_flag: "festival_complete" },
+        node: "festival_finale"
+      },
+      {
+        condition: { trinket_count_gte: 6, not_flag: "willow_all_trinkets" },
+        node: "all_trinkets"
+      },
+      {
+        condition: { flag: "festival_complete" },
+        node: "post_festival"
+      },
+      {
+        condition: { flag: "willow_gift" },
+        node: "returning"
+      }
+    ],
+    nodes: {
+      greeting: {
+        text: "Good day, little sprout! Isn't the meadow air sweet today? Press [Tab] anytime to peek in your backpack, or [M] to view the shrine map.",
+        choices: [
+          { label: "Ask about Gems", next: "about_gems" },
+          { label: "I'm ready to explore!", next: "gift" }
+        ]
+      },
+      about_gems: {
+        text: "Shiny teal and golden gems dot the cliffs and ruins. Pip over by the signpost trades them for handy badges—like a Feather Badge for Double Jumping!",
+        choices: [{ label: "Thanks, Grandma!", next: "gift" }]
+      },
+      gift: {
+        text: "Here—take a few pocket gems from my tea jar so you can try out Pip's shop right away. Stay cozy out there!",
+        effects: [
+          { type: "set_flag", flag: "willow_gift", value: true },
+          { type: "give_gems", amount: 5 },
+          { type: "save" }
+        ],
+        choices: [{ label: "Thank you!", close: true }]
+      },
+      returning: {
+        text: "Take your time hopping between the meadow, canopy, and ruins. There's no rush at all—if you slip into a stream, you'll puff right back onto safe ground.",
+        choices: [
+          { label: "Any tips on Shrines?", next: "shrines" },
+          { label: "See you soon!", close: true }
+        ]
+      },
+      shrines: {
+        text: "Each region holds a stone lantern Shrine. Attune it once with [E], and you can fast-travel right back from your [M] Map anytime!",
+        choices: [{ label: "Got it!", close: true }]
+      },
+      all_trinkets: {
+        text: "My goodness—you found all six lost trinkets across the valley! You have the heart of a true cozy explorer. Take these celebratory Star Gems!",
+        effects: [
+          { type: "set_flag", flag: "willow_all_trinkets", value: true },
+          { type: "give_gems", amount: 15 },
+          { type: "save" }
+        ],
+        choices: [{ label: "Hooray!", close: true }]
+      },
+      festival_finale: {
+        text: "Look at the valley—all four shrines are glowing together! The Festival of Sprouts has begun! Wear this Sprout Festival Halo with pride, little sprout.",
+        effects: [
+          { type: "set_flag", flag: "festival_complete", value: true },
+          { type: "give_badge", badge_id: "festival_crown", category: "trail" },
+          { type: "give_gems", amount: 25 },
+          { type: "save" }
+        ],
+        choices: [{ label: "Celebrate!", close: true }]
+      },
+      post_festival: {
+        text: "The lanterns are warm and the whole valley is at peace. Hop around anytime, check your [J] Journal, or hunt down any leftover trinkets!",
+        choices: [{ label: "Stay cozy!", close: true }]
+      }
+    }
+  },
+  pip_merchant: {
+    start: "welcome",
+    nodes: {
+      welcome: {
+        text: "Ribbit! Welcome to Pip's Traveling Satchel! I've got Feather Badges, Breeze Dashes, Clover Boots, and sparkly trails for fair gem prices!",
+        choices: [
+          { label: "Browse Shop", open_shop: true },
+          { label: "Just chatting", next: "chat" },
+          { label: "Maybe later", close: true }
+        ]
+      },
+      chat: {
+        text: "Everything I sell snaps right onto your cloak as a Badge. You can toggle abilities or swap cosmetic trails anytime in your [Tab] Backpack!",
+        choices: [
+          { label: "Open Shop", open_shop: true },
+          { label: "Thanks, Pip!", close: true }
+        ]
+      }
+    }
+  },
+  bramble_fox: {
+    start: "intro",
+    entry_rules: [
+      {
+        condition: { trinket_count_gte: 2, not_flag: "bramble_reward" },
+        node: "cartographer_gift"
+      },
+      {
+        condition: { flag: "bramble_reward" },
+        node: "post_gift"
+      }
+    ],
+    nodes: {
+      intro: {
+        text: "Ahoy, fellow wanderer! I'm sketching the Canopy Cliffs. Don't miss the Canopy Shrine up on the middle bough—it'll link straight to your [M] Map!",
+        choices: [
+          { label: "Any secrets nearby?", next: "secret" },
+          { label: "Good luck mapping!", close: true }
+        ]
+      },
+      secret: {
+        text: "Rumour says a Mossy Compass sits atop the highest eastern branch. A bouncy mushroom and a Feather Badge will get you right up there!",
+        choices: [{ label: "I'll look for it!", close: true }]
+      },
+      cartographer_gift: {
+        text: "Whoa—you've already tracked down two rare trinkets! As one cartographer to another, please take my spare Starlight Trail badge!",
+        effects: [
+          { type: "set_flag", flag: "bramble_reward", value: true },
+          { type: "give_badge", badge_id: "starlight_trail", category: "trail" },
+          { type: "save" }
+        ],
+        choices: [{ label: "Ooh, shiny!", close: true }]
+      },
+      post_gift: {
+        text: "The twilight breeze feels amazing up here, doesn't it? Keep charting every nook!",
+        choices: [{ label: "Will do!", close: true }]
+      }
+    }
+  },
+  luma_spirit: {
+    start: "whisper",
+    entry_rules: [
+      {
+        condition: { has_trinket: "starlight_lantern", not_flag: "luma_charm" },
+        node: "lantern_joy"
+      },
+      {
+        condition: { flag: "luma_charm" },
+        node: "peaceful"
+      }
+    ],
+    nodes: {
+      whisper: {
+        text: "Hush, warm little sprout... The Sunken Ruins glow brightest when travelers carry our lost Starlight Lantern. Have you spotted it high above?",
+        choices: [
+          { label: "Where is it?", next: "hint" },
+          { label: "I'll keep looking", close: true }
+        ]
+      },
+      hint: {
+        text: "Follow the glowing mushroom pads up to the western stone arch. And don't forget to attune the Ruins Shrine right beside me!",
+        choices: [{ label: "Thank you, Luma", close: true }]
+      },
+      lantern_joy: {
+        text: "Oh! You found the Starlight Lantern! Its gentle hum warms the whole cavern. Let me bless your satchel with a Magnet Charm!",
+        effects: [
+          { type: "set_flag", flag: "luma_charm", value: true },
+          { type: "give_badge", badge_id: "magnet_charm", category: "ability" },
+          { type: "save" }
+        ],
+        choices: [{ label: "Thank you so much!", close: true }]
+      },
+      peaceful: {
+        text: "May the fireflies always light your ledges, little traveler.",
+        choices: [{ label: "Stay cozy, Luma", close: true }]
+      }
+    }
+  },
+  sol_owl: {
+    start: "welcome",
+    entry_rules: [
+      {
+        condition: { has_trinket: "sunstone_prism", not_flag: "sol_prism_seen" },
+        node: "prism_praise"
+      },
+      {
+        condition: { flag: "sol_glider" },
+        node: "breezy"
+      }
+    ],
+    nodes: {
+      welcome: {
+        text: "Hoo-hoo! Welcome above the clouds, little sprout! I am Sol the Skyweaver. Up here, the golden wind carries travelers gently—take this Leaf Glider!",
+        effects: [
+          { type: "set_flag", flag: "sol_glider", value: true },
+          { type: "give_badge", badge_id: "glide_leaf", category: "ability" },
+          { type: "save" }
+        ],
+        choices: [
+          { label: "How do I use it?", next: "how_to" },
+          { label: "Thank you, Sol!", close: true }
+        ]
+      },
+      how_to: {
+        text: "Hold [Space] while falling to catch the updraft and float gently! Use it to reach the Sunstone Prism on the western arch and the Spire Shrine.",
+        choices: [{ label: "I'll try it!", close: true }]
+      },
+      prism_praise: {
+        text: "Aha! You recovered the Sunstone Prism! Its warm light completes the Spire's song. Take these Star Gems for your satchel!",
+        effects: [
+          { type: "set_flag", flag: "sol_prism_seen", value: true },
+          { type: "give_gems", amount: 10 },
+          { type: "save" }
+        ],
+        choices: [{ label: "Thank you, Sol!", close: true }]
+      },
+      breezy: {
+        text: "Hold [Space] in mid-air to glide on the golden breeze. Once all four shrines glow, Grandma Willow will host the Festival of Sprouts!",
+        choices: [{ label: "See you below!", close: true }]
+      }
+    }
+  }
+};
+
+export const LEVELS_DATA: Record<string, LevelData> = {
+  meadow_hub: {
+    id: "meadow_hub",
+    name: "Meadow Hub",
+    theme: "meadow",
+    ambient_type: "fireflies",
+    grid: [
+      "#############################################",
+      "#                                           #",
+      "#                                           #",
+      "#                                           #",
+      "#                                           #",
+      "#            *                              #",
+      "#          #####                            #",
+      "#                                           #",
+      "#                ===    ===                 #",
+      "#                                           #",
+      "#  ===                   ===       =======  #",
+      "#       ===                                 #",
+      "#           G   G           ^               #",
+      "#          =======         ===   G    G     #",
+      "#   P             G     G       ===  ===    #",
+      "########################~~~##################",
+      "#############################################",
+      "#############################################"
+    ],
+    spawns: {
+      start: [4, 14],
+      shrine: [7, 14],
+      from_canopy: [41, 9],
+      from_ruins: [39, 14]
+    },
+    shrines: [{ shrine_id: "shrine_meadow", name: "Meadow Hearth Shrine", col: 6, row: 14 }],
+    npcs: [
+      { npc_id: "grandma_willow", name: "Grandma Willow", dialogue_id: "grandma_willow", col: 11, row: 14, style: "willow" },
+      { npc_id: "pip_merchant", name: "Pip the Merchant", dialogue_id: "pip_merchant", col: 20, row: 14, style: "frog" }
+    ],
+    signs: [
+      { col: 17, row: 14, text: "Welcome to Meadow Hub! Jump with [Space], talk or enter doors with [E], open Backpack with [Tab], and open Shrine Map with [M]." }
+    ],
+    portals: [
+      { target_level: "canopy_cliffs", target_spawn: "from_meadow", label: "To Canopy Cliffs", col: 41, row: 9 },
+      { target_level: "sunken_ruins", target_spawn: "from_meadow", label: "To Sunken Ruins", col: 42, row: 14 }
+    ],
+    trinkets: [{ trinket_id: "dewdrop_bell", col: 14, row: 5 }],
+    decor: [
+      { kind: "tree", col: 2, row: 14 },
+      { kind: "flower", col: 9, row: 14 },
+      { kind: "lantern", col: 13, row: 14 },
+      { kind: "tree", col: 22, row: 14 },
+      { kind: "flower", col: 35, row: 14 },
+      { kind: "lantern", col: 40, row: 9 }
+    ]
+  },
+  canopy_cliffs: {
+    id: "canopy_cliffs",
+    name: "Canopy Cliffs",
+    theme: "canopy",
+    ambient_type: "leaves",
+    grid: [
+      "##############################################",
+      "#                                            #",
+      "#                                            #",
+      "#                                     *      #",
+      "#                                   ######   #",
+      "#             G   G                          #",
+      "#            =======        ===              #",
+      "#      ===                        ===        #",
+      "#                     ===                    #",
+      "#                  #######                   #",
+      "#                     ^                G  G  #",
+      "#    ^       G   ===       G          ###### #",
+      "#   ===     ===           ===                #",
+      "#     G                             ^        #",
+      "#   #####          ===             ===       #",
+      "#                                            #",
+      "#########~~~############~~~###################",
+      "##############################################",
+      "##############################################"
+    ],
+    spawns: {
+      start: [3, 15],
+      from_meadow: [3, 15],
+      shrine: [20, 8],
+      from_ruins: [42, 10],
+      from_spire: [36, 3]
+    },
+    shrines: [{ shrine_id: "shrine_canopy", name: "Canopy Bough Shrine", col: 20, row: 8 }],
+    npcs: [{ npc_id: "bramble_fox", name: "Bramble the Fox", dialogue_id: "bramble_fox", col: 7, row: 15, style: "fox" }],
+    signs: [{ col: 15, row: 15, text: "Bouncy mushrooms launch you high into the treetops! Attune the Canopy Shrine up center to unlock fast travel." }],
+    portals: [
+      { target_level: "meadow_hub", target_spawn: "from_canopy", label: "Back to Meadow Hub", col: 2, row: 15 },
+      { target_level: "sunken_ruins", target_spawn: "from_canopy", label: "Descend to Sunken Ruins", col: 43, row: 10 },
+      { target_level: "sunlit_spire", target_spawn: "from_canopy", label: "Ascend to Sunlit Spire", col: 37, row: 3 }
+    ],
+    trinkets: [{ trinket_id: "mossy_compass", col: 40, row: 3 }],
+    decor: [
+      { kind: "tree", col: 5, row: 15 },
+      { kind: "lantern", col: 19, row: 8 },
+      { kind: "flower", col: 30, row: 15 },
+      { kind: "tree", col: 34, row: 15 }
+    ]
+  },
+  sunken_ruins: {
+    id: "sunken_ruins",
+    name: "Sunken Ruins",
+    theme: "ruins",
+    ambient_type: "spores",
+    grid: [
+      "##############################################",
+      "#                                            #",
+      "#                                            #",
+      "#                                            #",
+      "#                                            #",
+      "#       *                                    #",
+      "#     ######                         ######  #",
+      "#               ===                          #",
+      "#      ===               ===      ===        #",
+      "#                                            #",
+      "#   ^                                        #",
+      "#  ===           G   G               G  G    #",
+      "#               =======     ===     ======   #",
+      "#     ===                                    #",
+      "#                        ^       G           #",
+      "#   G    G              ===     ===    *     #",
+      "############~~~####~~~#################~~~####",
+      "##############################################",
+      "##############################################"
+    ],
+    spawns: {
+      start: [3, 15],
+      from_meadow: [3, 15],
+      shrine: [16, 15],
+      from_canopy: [40, 5]
+    },
+    shrines: [{ shrine_id: "shrine_ruins", name: "Twilight Ruins Shrine", col: 16, row: 15 }],
+    npcs: [{ npc_id: "luma_spirit", name: "Luma the Spirit", dialogue_id: "luma_spirit", col: 18, row: 15, style: "spirit" }],
+    signs: [{ col: 8, row: 15, text: "Ancient twilight arches cradle the valley below. Speak with Luma beside the shrine if you find the Starlight Lantern!" }],
+    portals: [
+      { target_level: "meadow_hub", target_spawn: "from_ruins", label: "Back to Meadow Hub", col: 2, row: 15 },
+      { target_level: "canopy_cliffs", target_spawn: "from_ruins", label: "Up to Canopy Cliffs", col: 42, row: 5 }
+    ],
+    trinkets: [
+      { trinket_id: "starlight_lantern", col: 10, row: 5 },
+      { trinket_id: "fossil_acorn", col: 37, row: 15 }
+    ],
+    decor: [
+      { kind: "pillar", col: 5, row: 15 },
+      { kind: "lantern", col: 15, row: 15 },
+      { kind: "pillar", col: 28, row: 15 },
+      { kind: "lantern", col: 38, row: 5 }
+    ]
+  },
+  sunlit_spire: {
+    id: "sunlit_spire",
+    name: "Sunlit Spire",
+    theme: "spire",
+    ambient_type: "fireflies",
+    grid: [
+      "##############################################",
+      "#                                            #",
+      "#                                            #",
+      "#     *                                      #",
+      "#   ######                     ===           #",
+      "#             ===                       *    #",
+      "#                     ===             ###### #",
+      "#      ===                                   #",
+      "#                  #########                 #",
+      "#   ^                                        #",
+      "#  ===      ===                 ===          #",
+      "#                     ^                      #",
+      "#        G   G       ===    G   G      ^     #",
+      "#       =======            =======    ===    #",
+      "#   P                                        #",
+      "#  #####     ===         ===       #######   #",
+      "#########~~~#########~~~##########~~~~~~~~~~~#",
+      "##############################################",
+      "##############################################"
+    ],
+    spawns: {
+      start: [4, 15],
+      from_canopy: [4, 15],
+      shrine: [23, 7]
+    },
+    shrines: [{ shrine_id: "shrine_spire", name: "Spire Summit Shrine", col: 22, row: 7 }],
+    npcs: [{ npc_id: "sol_owl", name: "Sol the Skyweaver", dialogue_id: "sol_owl", col: 6, row: 15, style: "owl" }],
+    signs: [
+      { col: 4, row: 15, text: "Welcome to the Sunlit Spire! Speak with Sol the Skyweaver to receive the Leaf Glider." }
+    ],
+    portals: [
+      { target_level: "canopy_cliffs", target_spawn: "from_spire", label: "Down to Canopy Cliffs", col: 2, row: 15 }
+    ],
+    trinkets: [
+      { trinket_id: "sunstone_prism", col: 7, row: 3 },
+      { trinket_id: "skyward_bell", col: 42, row: 5 }
+    ],
+    decor: [
+      { kind: "lantern", col: 5, row: 15 },
+      { kind: "pillar", col: 20, row: 7 },
+      { kind: "lantern", col: 24, row: 7 },
+      { kind: "flower", col: 38, row: 15 }
+    ]
+  }
+};
