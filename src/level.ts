@@ -4,6 +4,7 @@
 
 import { LevelData } from "./types.js";
 import { GameProgress } from "./save.js";
+import { ITEMS_DATA } from "./data.js";
 import { BouncePad, Gem, NPC, Portal, Shrine, Sign, Trinket } from "./entities.js";
 import { COLORS, TILE_SIZE, WORLD_H, WORLD_W } from "./settings.js";
 
@@ -56,6 +57,18 @@ export const THEMES: Record<string, ThemeColors> = {
     bodyDark: "#444658",
     water: "#4e80a4",
     waterCrest: "#9cd4ec"
+  },
+  spire: {
+    skyTop: "#7ab4d4",
+    skyBottom: "#f9d696",
+    hillFar: "#d9b89c",
+    hillNear: "#c2997a",
+    topTile: "#e5ae52",
+    topHighlight: "#ffe18e",
+    bodyTile: "#8a6b5c",
+    bodyDark: "#664c40",
+    water: "#7cbcd4",
+    waterCrest: "#eaf8ff"
   }
 };
 
@@ -87,6 +100,7 @@ export class Level {
 
   public camX = 0;
   public camY = 0;
+  private staticCanvas: HTMLCanvasElement;
 
   constructor(data: LevelData) {
     this.id = data.id;
@@ -103,6 +117,7 @@ export class Level {
 
     this.parseGrid();
     this.loadObjects(data);
+    this.staticCanvas = this.buildStaticCanvas();
   }
 
   private parseGrid(): void {
@@ -124,6 +139,8 @@ export class Level {
         } else if (ch === "*") {
           const uid = `${this.id}:${c},${r}`;
           this.gems.push(new Gem(uid, x + TILE_SIZE / 2, y + TILE_SIZE / 2, 5));
+        } else if (ch === "P" && !this.spawns.start) {
+          this.spawns.start = [x + TILE_SIZE / 2, y + TILE_SIZE];
         }
       });
     });
@@ -168,8 +185,10 @@ export class Level {
     });
 
     (data.trinkets || []).forEach((t) => {
+      const meta = ITEMS_DATA.trinkets[t.trinket_id];
+      const col = meta?.color ? `rgb(${meta.color.join(",")})` : COLORS.gold;
       this.trinkets.push(
-        new Trinket(t.trinket_id, t.trinket_id, t.col * TILE_SIZE + TILE_SIZE / 2, t.row * TILE_SIZE + TILE_SIZE / 2, COLORS.gold)
+        new Trinket(t.trinket_id, meta?.name || t.trinket_id, t.col * TILE_SIZE + TILE_SIZE / 2, t.row * TILE_SIZE + TILE_SIZE / 2, col)
       );
     });
   }
@@ -216,6 +235,81 @@ export class Level {
     this.camY += (desiredY - this.camY) * dt * 6.5;
   }
 
+  public updateEntities(dt: number, timeSec: number, playerCx: number): void {
+    this.gems.forEach((g) => g.update(dt, timeSec));
+    this.trinkets.forEach((t) => t.update(dt, timeSec));
+    this.bouncePads.forEach((p) => p.update(dt));
+    this.npcs.forEach((n) => n.update(playerCx));
+  }
+
+  private buildStaticCanvas(): HTMLCanvasElement {
+    const off = document.createElement("canvas");
+    off.width = this.pixelW;
+    off.height = this.pixelH;
+    const octx = off.getContext("2d")!;
+
+    this.decor.forEach((d) => {
+      const dx = d.col * TILE_SIZE;
+      const dy = (d.row + 1) * TILE_SIZE;
+      if (d.kind === "tree") {
+        octx.fillStyle = COLORS.wood_dark;
+        octx.fillRect(dx + 5, dy - 22, 6, 22);
+        octx.fillStyle = this.theme.hillNear;
+        octx.beginPath(); octx.arc(dx + 8, dy - 28, 14, 0, Math.PI * 2); octx.fill();
+        octx.fillStyle = this.theme.topTile;
+        octx.beginPath(); octx.arc(dx + 8, dy - 31, 11, 0, Math.PI * 2); octx.fill();
+      } else if (d.kind === "pillar") {
+        octx.fillStyle = "#6c6e84";
+        octx.fillRect(dx + 3, dy - 28, 10, 28);
+        octx.fillStyle = "#84869c";
+        octx.fillRect(dx + 1, dy - 30, 14, 4);
+      } else if (d.kind === "flower") {
+        octx.fillStyle = COLORS.moss;
+        octx.fillRect(dx + 7, dy - 5, 2, 5);
+        octx.fillStyle = COLORS.gold;
+        octx.fillRect(dx + 6, dy - 7, 4, 3);
+      } else if (d.kind === "lantern") {
+        octx.fillStyle = COLORS.wood_dark;
+        octx.fillRect(dx + 7, dy - 16, 2, 16);
+        octx.fillStyle = COLORS.gold_bright;
+        octx.beginPath(); octx.arc(dx + 8, dy - 17, 3, 0, Math.PI * 2); octx.fill();
+      }
+    });
+
+    this.grid.forEach((line, r) => {
+      line.split("").forEach((ch, c) => {
+        const x = c * TILE_SIZE;
+        const y = r * TILE_SIZE;
+        if (ch === "#") {
+          const above = this.grid[r - 1]?.[c];
+          if (above !== "#") {
+            octx.fillStyle = this.theme.bodyTile;
+            octx.fillRect(x, y + 4, TILE_SIZE, TILE_SIZE - 4);
+            octx.fillStyle = this.theme.topTile;
+            octx.fillRect(x, y, TILE_SIZE, 6);
+            octx.fillStyle = this.theme.topHighlight;
+            octx.fillRect(x, y, TILE_SIZE, 2);
+          } else {
+            octx.fillStyle = this.theme.bodyTile;
+            octx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+            octx.fillStyle = this.theme.bodyDark;
+            octx.fillRect(x + 2, y + 3, 5, 3);
+            octx.fillRect(x + 9, y + 10, 5, 3);
+          }
+        } else if (ch === "=") {
+          octx.fillStyle = COLORS.wood_mid;
+          octx.fillRect(x, y, TILE_SIZE, 4);
+          octx.fillStyle = COLORS.wood_light;
+          octx.fillRect(x, y, TILE_SIZE, 1);
+          octx.fillStyle = COLORS.wood_dark;
+          octx.fillRect(x + 2, y + 4, 2, 3);
+          octx.fillRect(x + TILE_SIZE - 4, y + 4, 2, 3);
+        }
+      });
+    });
+    return off;
+  }
+
   public render(ctx: CanvasRenderingContext2D, timeSec: number): void {
     // Sky
     const skyGrad = ctx.createLinearGradient(0, 0, 0, WORLD_H);
@@ -224,42 +318,32 @@ export class Level {
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, WORLD_W, WORLD_H);
 
-    // Parallax
-    const cxFar = Math.round(this.camX * 0.18);
-    ctx.fillStyle = this.theme.hillFar;
+    // Near hills + sun/moon
+    const cxNear = Math.round(this.camX * 0.36);
+    ctx.fillStyle = this.theme.hillNear;
     for (let i = -1; i < 6; i++) {
-      const hx = i * 140 - (cxFar % 140);
+      const hx = i * 110 - (cxNear % 110);
       ctx.beginPath();
-      ctx.ellipse(hx + 80, WORLD_H - 40, 85, 55, 0, 0, Math.PI * 2);
+      ctx.ellipse(hx + 70, WORLD_H - 22, 70, 42, 0, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.fillStyle = this.theme === THEMES.ruins ? "#dee8ff" : "#fff0b9";
+    ctx.beginPath();
+    ctx.arc(Math.round(WORLD_W * 0.78 - this.camX * 0.05), 46, 15, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Tiles
-    this.grid.forEach((line, r) => {
-      line.split("").forEach((ch, c) => {
-        const x = Math.round(c * TILE_SIZE - this.camX);
-        const y = Math.round(r * TILE_SIZE - this.camY);
-        if (ch === "#") {
-          const above = this.grid[r - 1]?.[c];
-          if (above !== "#") {
-            ctx.fillStyle = this.theme.bodyTile;
-            ctx.fillRect(x, y + 4, TILE_SIZE, TILE_SIZE - 4);
-            ctx.fillStyle = this.theme.topTile;
-            ctx.fillRect(x, y, TILE_SIZE, 6);
-            ctx.fillStyle = this.theme.topHighlight;
-            ctx.fillRect(x, y, TILE_SIZE, 2);
-          } else {
-            ctx.fillStyle = this.theme.bodyTile;
-            ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
-          }
-        } else if (ch === "=") {
-          ctx.fillStyle = COLORS.wood_mid;
-          ctx.fillRect(x, y, TILE_SIZE, 4);
-        } else if (ch === "~") {
-          ctx.fillStyle = this.theme.water;
-          ctx.fillRect(x, y + 5, TILE_SIZE, TILE_SIZE - 5);
-        }
-      });
+    // Cached tiles & decor in 1 draw call
+    ctx.drawImage(this.staticCanvas, -Math.round(this.camX), -Math.round(this.camY));
+
+    // Animated water ripples
+    const wave = Math.round(Math.sin(timeSec * 3.2) * 1.5);
+    this.hazardRects.forEach((h) => {
+      const hx = Math.round(h.x - this.camX);
+      const hy = Math.round(h.y - this.camY);
+      ctx.fillStyle = this.theme.water;
+      ctx.fillRect(hx, hy, h.w, h.h);
+      ctx.fillStyle = this.theme.waterCrest;
+      ctx.fillRect(hx, hy + Math.max(0, wave), h.w, 1);
     });
 
     // Entities

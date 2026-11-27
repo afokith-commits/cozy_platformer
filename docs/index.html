@@ -47,10 +47,9 @@
     }
     canvas {
       display: block;
-      width: 1280px;
-      height: 720px;
-      max-width: 95vw;
-      max-height: 75vh;
+      width: min(1280px, 95vw, calc(76vh * 16 / 9));
+      aspect-ratio: 16 / 9;
+      height: auto;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
@@ -82,13 +81,15 @@
 
   <footer>
     <div><span class="key">A / D / ← →</span> Move</div>
-    <div><span class="key">Space / W / ↑</span> Jump</div>
+    <div><span class="key">Space / W / ↑</span> Jump &amp; Glide</div>
     <div><span class="key">Shift / X</span> Dash</div>
     <div><span class="key">E / Enter</span> Interact</div>
-    <div><span class="key">Tab</span> Satchel</div>
+    <div><span class="key">Tab</span> Bag</div>
     <div><span class="key">M</span> Map</div>
+    <div><span class="key">J</span> Journal</div>
+    <div><span class="key">Esc</span> Menu</div>
   </footer>
 
-  <script src="game.js"></script>
+  <script type="module" src="game.js"></script>
 </body>
 </html>

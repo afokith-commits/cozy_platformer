@@ -120,6 +120,9 @@ export class ParticleSystem {
     } else if (trailId === "starlight_trail") {
       color = COLORS.plum;
       grav = -6;
+    } else if (trailId === "festival_crown") {
+      color = Math.random() < 0.5 ? COLORS.gold_bright : COLORS.cream;
+      grav = -18;
     }
     const life = 0.28 + Math.random() * 0.20;
     this.particles.push(
@@ -179,16 +182,18 @@ export class ParticleSystem {
       ctx.fill();
     });
 
-    // Dynamic particles
+    // Dynamic particles with alpha fade
     this.particles.forEach((p) => {
       const ratio = Math.max(0, p.life / p.maxLife);
       const r = Math.max(1, p.size * ratio);
       const sx = Math.round(p.x - camX);
       const sy = Math.round(p.y - camY);
+      ctx.globalAlpha = Math.max(0.15, ratio);
       ctx.fillStyle = p.color;
       ctx.beginPath();
       ctx.arc(sx, sy, r, 0, Math.PI * 2);
       ctx.fill();
     });
+    ctx.globalAlpha = 1.0;
   }
 }

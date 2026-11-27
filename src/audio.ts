@@ -1,110 +1,109 @@
 /**
- * Procedural Web Audio API Synthesizer for SFX and cozy background music.
+ * Sproutbound — Web Audio API Sound Effects & Cozy Music Generator
  */
 
 export class AudioManager {
   private ctx: AudioContext | null = null;
-  public sfxVolume = 0.65;
-  public musicVolume = 0.45;
   private musicTimer: number | null = null;
   private isMusicPlaying = false;
+  private sfxVolume = 0.65;
+  private musicVolume = 0.45;
+  private chordIdx = 0;
 
-  constructor() {
-    // AudioContext will initialize on first user gesture
+  public setSfxVolume(v: number) {
+    this.sfxVolume = Math.max(0, Math.min(1, v));
+  }
+
+  public setMusicVolume(v: number) {
+    this.musicVolume = Math.max(0, Math.min(1, v));
   }
 
   private initCtx() {
     if (!this.ctx) {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      this.ctx = new AudioCtx();
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioContextClass) {
+        this.ctx = new AudioContextClass();
+      }
     }
-    if (this.ctx.state === "suspended") {
+    if (this.ctx && this.ctx.state === "suspended") {
       this.ctx.resume();
     }
   }
 
-  public playTone(freqStart: number, freqEnd: number, duration: number, type: OscillatorType = "triangle", gainVal = 0.25) {
+  public playTone(
+    freqStart: number,
+    freqEnd: number,
+    duration: number,
+    type: OscillatorType = "triangle",
+    gainVal = 0.25,
+    isMusic = false
+  ) {
     try {
       this.initCtx();
-      if (!this.ctx || this.sfxVolume <= 0.01) return;
+      const vol = isMusic ? this.musicVolume : this.sfxVolume;
+      if (!this.ctx || this.ctx.state !== "running" || vol <= 0.01) return;
 
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-
       osc.type = type;
       const now = this.ctx.currentTime;
       osc.frequency.setValueAtTime(freqStart, now);
       osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), now + duration);
 
-      const actualGain = gainVal * this.sfxVolume;
+      const actualGain = gainVal * vol;
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(actualGain, now + 0.008);
+      gain.gain.linearRampToValueAtTime(actualGain, now + (isMusic ? 0.25 : 0.008));
       gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-
       osc.start(now);
       osc.stop(now + duration);
-    } catch {
-      // Audio fallback
-    }
+    } catch { /* Audio fallback */ }
   }
 
-  public playArpeggio(notes: number[], stepDur: number, gainVal = 0.25) {
-    notes.forEach((freq, idx) => {
-      setTimeout(() => {
-        this.playTone(freq, freq * 1.02, stepDur * 1.5, "sine", gainVal);
-      }, idx * stepDur * 1000);
-    });
-  }
-
-  public play(name: string) {
-    switch (name) {
+  public play(sfxName: string) {
+    switch (sfxName) {
       case "jump":
-        this.playTone(280, 520, 0.11, "triangle", 0.26);
+        this.playTone(220, 440, 0.14, "triangle", 0.2);
         break;
       case "double_jump":
-        this.playTone(420, 740, 0.12, "sine", 0.25);
+        this.playTone(330, 660, 0.16, "sine", 0.22);
         break;
       case "dash":
-        this.playTone(620, 220, 0.13, "triangle", 0.24);
-        break;
-      case "land":
-        this.playTone(160, 95, 0.06, "triangle", 0.18);
-        break;
-      case "bounce":
-        this.playTone(240, 680, 0.16, "sine", 0.28);
+        this.playTone(440, 150, 0.15, "sawtooth", 0.18);
         break;
       case "gem":
-        this.playArpeggio([659.25, 880.0], 0.05, 0.25);
+        this.playTone(587.33, 880, 0.18, "sine", 0.22);
         break;
       case "trinket":
-        this.playArpeggio([523.25, 659.25, 783.99, 1046.5], 0.075, 0.30);
+        this.playTone(440, 880, 0.35, "sine", 0.25);
+        setTimeout(() => this.playTone(880, 1320, 0.25, "sine", 0.2), 120);
         break;
       case "shrine":
-        this.playArpeggio([392.0, 523.25, 659.25, 783.99], 0.09, 0.28);
+        this.playTone(261.63, 523.25, 0.6, "sine", 0.3);
+        setTimeout(() => this.playTone(392.0, 783.99, 0.5, "sine", 0.25), 200);
         break;
       case "warp":
-        this.playArpeggio([783.99, 659.25, 523.25, 1046.5], 0.065, 0.28);
-        break;
-      case "buy":
-        this.playArpeggio([587.33, 739.99, 880.0], 0.06, 0.28);
-        break;
-      case "equip":
-        this.playTone(440, 660, 0.08, "sine", 0.24);
-        break;
-      case "respawn":
-        this.playTone(340, 210, 0.18, "sine", 0.22);
-        break;
-      case "confirm":
-        this.playArpeggio([523.25, 659.25], 0.055, 0.26);
-        break;
-      case "cancel":
-        this.playTone(360, 240, 0.09, "triangle", 0.24);
+        this.playTone(300, 150, 0.4, "triangle", 0.25);
         break;
       case "blip":
-        this.playTone(480, 510, 0.024, "sine", 0.10);
+        this.playTone(480, 520, 0.06, "sine", 0.12);
+        break;
+      case "confirm":
+        this.playTone(523.25, 659.25, 0.12, "sine", 0.18);
+        break;
+      case "cancel":
+        this.playTone(350, 280, 0.12, "triangle", 0.15);
+        break;
+      case "equip":
+        this.playTone(400, 600, 0.12, "sine", 0.16);
+        break;
+      case "buy":
+        this.playTone(523.25, 1046.5, 0.25, "sine", 0.25);
+        break;
+      default:
+        this.playTone(300, 400, 0.1, "triangle", 0.15);
         break;
     }
   }
@@ -115,21 +114,32 @@ export class AudioManager {
     this.scheduleCozyMusicLoop();
   }
 
+  public stopMusic() {
+    this.isMusicPlaying = false;
+    if (this.musicTimer !== null) {
+      clearTimeout(this.musicTimer);
+      this.musicTimer = null;
+    }
+  }
+
   private scheduleCozyMusicLoop = () => {
     if (!this.isMusicPlaying) return;
-    this.initCtx();
-    if (this.ctx && this.musicVolume > 0.01) {
+    if (this.ctx && this.ctx.state === "running" && this.musicVolume > 0.01) {
       const chords = [
         [174.61, 220.00, 261.63, 329.63], // Fmaj7
         [146.83, 220.00, 261.63, 349.23], // Dm7
         [116.54, 174.61, 220.00, 293.66], // Bbmaj7
         [130.81, 174.61, 261.63, 392.00]  // Csus4
       ];
-      const chord = chords[Math.floor(Math.random() * chords.length)];
+      const bells = [523.25, 659.25, 587.33, 783.99];
+      const chord = chords[this.chordIdx % chords.length];
       chord.forEach((freq) => {
-        this.playTone(freq, freq * 1.001, 2.8, "sine", 0.06 * this.musicVolume);
+        this.playTone(freq, freq * 1.001, 2.9, "sine", 0.055, true);
       });
+      const bell = bells[this.chordIdx % bells.length];
+      setTimeout(() => this.playTone(bell, bell, 0.9, "sine", 0.04, true), 900);
+      this.chordIdx = (this.chordIdx + 1) % chords.length;
     }
-    this.musicTimer = window.setTimeout(this.scheduleCozyMusicLoop, 3200);
+    this.musicTimer = window.setTimeout(this.scheduleCozyMusicLoop, 3000);
   };
 }

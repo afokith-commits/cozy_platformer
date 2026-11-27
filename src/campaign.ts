@@ -131,7 +131,7 @@ export const MAP_NODES: CampaignMapNode[] = [
     spawn_id: "shrine",
     name: "Sunlit Spire",
     subtitle: "Golden-hour cloud-top sanctuary home to Sol the Skyweaver.",
-    pos: [715, 185],
+    pos: [715, 215],
     color: "#f4c04e",
   },
 ];

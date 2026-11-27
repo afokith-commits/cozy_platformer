@@ -9,7 +9,6 @@ export const CANVAS_H = 720;
 export const UI_SCALE = CANVAS_W / WORLD_W;
 
 export const TILE_SIZE = 16;
-export const FPS = 60;
 export const MAX_DT = 0.05;
 
 // Physics constants (pixels/sec in 480x270 world space)
@@ -34,7 +33,8 @@ export const DASH_SPEED = 260.0;
 export const DASH_DURATION = 0.14;
 export const DASH_COOLDOWN = 0.55;
 
-export const INTERACT_RADIUS = 26.0;
+export const GLIDE_FALL_SPEED = 52.0;
+export const INTERACT_RADIUS = 30.0;
 export const GEM_MAGNET_RADIUS = 58.0;
 
 export const COLORS = {

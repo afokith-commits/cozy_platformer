@@ -1,135 +1,8 @@
 /**
- * Game Data Definitions (Items, Badges, Dialogues, Levels, Save Management)
+ * Game Data Definitions (Items, Badges, Dialogues, Levels)
  */
 
-export interface ItemDef {
-  name: string;
-  price?: number;
-  description: string;
-  hint?: string;
-  color?: number[];
-}
-
-export interface ItemsCatalog {
-  abilities: Record<string, ItemDef>;
-  trails: Record<string, ItemDef>;
-  trinkets: Record<string, ItemDef>;
-}
-
-export interface DialogueChoice {
-  label: string;
-  next?: string;
-  close?: boolean;
-  open_shop?: boolean;
-}
-
-export interface DialogueEffect {
-  type: string;
-  flag?: string;
-  value?: boolean;
-  amount?: number;
-  badge_id?: string;
-  category?: string;
-}
-
-export interface DialogueNode {
-  text: string;
-  choices?: DialogueChoice[];
-  effects?: DialogueEffect[];
-}
-
-export interface DialogueTree {
-  start: string;
-  entry_rules?: Array<{
-    condition: {
-      trinket_count_gte?: number;
-      has_trinket?: string;
-      flag?: string;
-      not_flag?: string;
-    };
-    node: string;
-  }>;
-  nodes: Record<string, DialogueNode>;
-}
-
-export interface LevelData {
-  id: string;
-  name: string;
-  theme: string;
-  ambient_type: string;
-  grid: string[];
-  spawns: Record<string, [number, number]>;
-  shrines?: Array<{ shrine_id: string; name: string; col: number; row: number }>;
-  npcs?: Array<{ npc_id: string; name: string; dialogue_id: string; col: number; row: number; style?: string }>;
-  signs?: Array<{ col: number; row: number; text: string }>;
-  portals?: Array<{ target_level: string; target_spawn: string; label: string; col: number; row: number }>;
-  trinkets?: Array<{ trinket_id: string; col: number; row: number }>;
-  decor?: Array<{ kind: string; col: number; row: number }>;
-}
-
-export class GameProgress {
-  public gems = 0;
-  public collected_gems: string[] = [];
-  public trinkets: string[] = [];
-  public unlocked_badges: string[] = [];
-  public equipped_badges: string[] = [];
-  public unlocked_shrines: string[] = [];
-  public flags: Record<string, boolean> = {};
-  public current_level = "meadow_hub";
-  public spawn_id = "start";
-  public sfx_volume = 0.65;
-  public music_volume = 0.45;
-
-  constructor() {
-    this.load();
-  }
-
-  public isEquipped(badgeId: string): boolean {
-    return this.equipped_badges.includes(badgeId);
-  }
-
-  public isUnlocked(badgeId: string): boolean {
-    return this.unlocked_badges.includes(badgeId);
-  }
-
-  public hasTrinket(trinketId: string): boolean {
-    return this.trinkets.includes(trinketId);
-  }
-
-  public save() {
-    try {
-      localStorage.setItem("sproutbound_save", JSON.stringify(this));
-    } catch {
-      // LocalStorage fallback
-    }
-  }
-
-  public load() {
-    try {
-      const dataStr = localStorage.getItem("sproutbound_save");
-      if (dataStr) {
-        const data = JSON.parse(dataStr);
-        Object.assign(this, data);
-      }
-    } catch {
-      // LocalStorage fallback
-    }
-  }
-
-  public reset() {
-    localStorage.removeItem("sproutbound_save");
-    this.gems = 0;
-    this.collected_gems = [];
-    this.trinkets = [];
-    this.unlocked_badges = [];
-    this.equipped_badges = [];
-    this.unlocked_shrines = [];
-    this.flags = {};
-    this.current_level = "meadow_hub";
-    this.spawn_id = "start";
-    this.save();
-  }
-}
+import { DialogueTree, ItemsCatalog, LevelData } from "./types.js";
 
 export const ITEMS_DATA: ItemsCatalog = {
   abilities: {
@@ -473,7 +346,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       "#       ===                                 #",
       "#           G   G           ^               #",
       "#          =======         ===   G    G     #",
-      "#   P             G     G       ===  ===    #",
+      "#   P             G     G      ===  ===    #",
       "########################~~~##################",
       "#############################################",
       "#############################################"
@@ -615,7 +488,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       "#                                            #",
       "#                                            #",
       "#     *                                      #",
-      "#   ######                     ===           #",
+      "#   ######                  ===              #",
       "#             ===                       *    #",
       "#                     ===             ###### #",
       "#      ===                                   #",
@@ -625,21 +498,21 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       "#                     ^                      #",
       "#        G   G       ===    G   G      ^     #",
       "#       =======            =======    ===    #",
-      "#   P                                        #",
-      "#  #####     ===         ===       #######   #",
+      "#                                            #",
+      "#   P        ===         ===       #######   #",
       "#########~~~#########~~~##########~~~~~~~~~~~#",
       "##############################################",
       "##############################################"
     ],
     spawns: {
-      start: [4, 15],
-      from_canopy: [4, 15],
+      start: [4, 14],
+      from_canopy: [4, 14],
       shrine: [23, 7]
     },
     shrines: [{ shrine_id: "shrine_spire", name: "Spire Summit Shrine", col: 22, row: 7 }],
-    npcs: [{ npc_id: "sol_owl", name: "Sol the Skyweaver", dialogue_id: "sol_owl", col: 6, row: 15, style: "owl" }],
+    npcs: [{ npc_id: "sol_owl", name: "Sol the Skyweaver", dialogue_id: "sol_owl", col: 6, row: 14, style: "owl" }],
     signs: [
-      { col: 4, row: 15, text: "Welcome to the Sunlit Spire! Speak with Sol the Skyweaver to receive the Leaf Glider." }
+      { col: 4, row: 14, text: "Welcome to the Sunlit Spire! Speak with Sol the Skyweaver to receive the Leaf Glider." }
     ],
     portals: [
       { target_level: "canopy_cliffs", target_spawn: "from_spire", label: "Down to Canopy Cliffs", col: 2, row: 15 }
@@ -649,10 +522,10 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       { trinket_id: "skyward_bell", col: 42, row: 5 }
     ],
     decor: [
-      { kind: "lantern", col: 5, row: 15 },
+      { kind: "lantern", col: 5, row: 14 },
       { kind: "pillar", col: 20, row: 7 },
       { kind: "lantern", col: 24, row: 7 },
-      { kind: "flower", col: 38, row: 15 }
+      { kind: "flower", col: 38, row: 14 }
     ]
   }
 };

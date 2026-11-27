@@ -17,6 +17,7 @@ import {
   DASH_DURATION,
   DASH_SPEED,
   DOUBLE_JUMP_VELOCITY,
+  GLIDE_FALL_SPEED,
   GRAVITY,
   JUMP_BUFFER_TIME,
   JUMP_VELOCITY,
@@ -50,6 +51,10 @@ export class Player {
   public scaleX = 1.0;
   public scaleY = 1.0;
   public walkCycle = 0.0;
+
+  public isGliding = false;
+  private trailTimer = 0.0;
+  private blinkTimer = 2.5;
 
   constructor(x: number, y: number) {
     this.placeAt(x, y);
@@ -128,6 +133,7 @@ export class Player {
       this.dashTimer -= dt;
       this.vx = this.dashDir * DASH_SPEED;
       this.vy = 0;
+      this.isGliding = false;
       particles.spawnTrail(this.x + this.width / 2, this.y + this.height / 2, "dash");
     } else {
       let accel = this.onGround ? MOVE_ACCEL : AIR_ACCEL;
@@ -144,6 +150,14 @@ export class Player {
       }
 
       this.vy = Math.min(MAX_FALL_SPEED, this.vy + GRAVITY * dt);
+
+      const holdingJump = !!(keys[" "] || keys["w"] || keys["W"] || keys["ArrowUp"] || keys["z"] || keys["Z"]);
+      if (progress.isEquipped("glide_leaf") && holdingJump && !this.onGround && this.vy > GLIDE_FALL_SPEED) {
+        this.vy = GLIDE_FALL_SPEED;
+        this.isGliding = true;
+      } else {
+        this.isGliding = false;
+      }
     }
 
     if (this.jumpBufferTimer > 0 && (this.onGround || this.coyoteTimer > 0)) {
@@ -196,6 +210,7 @@ export class Player {
     if (this.onGround) {
       this.coyoteTimer = COYOTE_TIME;
       this.airJumpsLeft = progress.isEquipped("feather_badge") ? 1 : 0;
+      this.isGliding = false;
       if (!wasOnGround) {
         this.scaleX = 1.24;
         this.scaleY = 0.78;
@@ -231,10 +246,29 @@ export class Player {
       this.vx = 0;
       this.vy = 0;
       this.dashTimer = 0;
+      this.isGliding = false;
       this.respawnFlash = 0.45;
       audio.play("respawn");
       particles.spawnBurst(this.x + this.width / 2, this.y + this.height / 2, COLORS.cream, 10, 45);
     }
+
+    const activeTrail = progress.equipped_badges.find((b) => b.endsWith("_trail"));
+    if (activeTrail && (Math.abs(this.vx) > 25 || Math.abs(this.vy) > 35)) {
+      this.trailTimer += dt;
+      if (this.trailTimer >= 0.055) {
+        this.trailTimer = 0;
+        particles.spawnTrail(this.x + this.width / 2, this.y + this.height - 2, activeTrail);
+      }
+    }
+    if (progress.isEquipped("festival_crown") && Math.random() < dt * 7) {
+      particles.spawnTrail(this.x + this.width / 2, this.y + 1, "festival_crown");
+    }
+
+    if (this.onGround && Math.abs(this.vx) > 12) this.walkCycle += dt * Math.abs(this.vx) * 0.14;
+    else this.walkCycle = 0;
+
+    this.blinkTimer -= dt;
+    if (this.blinkTimer <= -0.12) this.blinkTimer = 2.8;
 
     this.scaleX += (1.0 - this.scaleX) * dt * 14.0;
     this.scaleY += (1.0 - this.scaleY) * dt * 14.0;
@@ -244,24 +278,57 @@ export class Player {
     return this.x < rect.x + rect.w && this.x + this.width > rect.x && this.y < rect.y + rect.h && this.y + this.height > rect.y;
   }
 
-  public render(ctx: CanvasRenderingContext2D, camX: number, camY: number): void {
+  public render(ctx: CanvasRenderingContext2D, camX: number, camY: number, progress?: GameProgress, timeSec = 0): void {
     if (this.respawnFlash > 0 && Math.floor(this.respawnFlash * 20) % 2 === 0) return;
 
     const cx = Math.round(this.x + this.width / 2 - camX);
     const bottomY = Math.round(this.y + this.height - camY);
-
     const w = Math.max(6, Math.round(12 * this.scaleX));
     const h = Math.max(8, Math.round(15 * this.scaleY));
     const x = cx - Math.floor(w / 2);
     const y = bottomY - h;
 
+    if (this.onGround) {
+      ctx.fillStyle = "rgba(24,18,22,0.45)";
+      ctx.fillRect(cx - 5, bottomY - 1, 10, 2);
+    }
+
+    if (this.isGliding) {
+      ctx.fillStyle = COLORS.coral;
+      ctx.beginPath();
+      ctx.ellipse(cx, y - 4, 9, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = COLORS.wood_dark;
+      ctx.fillRect(cx - 1, y - 3, 2, 5);
+    }
+
+    ctx.fillStyle = COLORS.coral;
+    ctx.fillRect(cx - this.facing * 4, y + Math.floor(h / 2), 4, 2);
+
     ctx.fillStyle = COLORS.sage;
     ctx.fillRect(x + 1, y + 5, w - 2, h - 5);
+    const footOff = this.onGround && Math.abs(this.vx) > 12 ? Math.round(Math.sin(this.walkCycle)) : 0;
+    ctx.fillStyle = COLORS.espresso;
+    ctx.fillRect(cx - 3, bottomY - 2 + Math.max(0, footOff), 2, 2);
+    ctx.fillRect(cx + 1, bottomY - 2 + Math.max(0, -footOff), 2, 2);
+
     ctx.fillStyle = COLORS.moss;
     ctx.fillRect(x, y + 1, w, Math.max(7, Math.floor(h / 2 + 1)));
+    ctx.fillStyle = COLORS.moss_light;
+    ctx.fillRect(cx, y - 1, 2, 2);
     ctx.fillStyle = COLORS.cream;
     ctx.fillRect(cx + (this.facing > 0 ? 1 : -4), y + 4, 5, 4);
-    ctx.fillStyle = COLORS.espresso;
-    ctx.fillRect(cx + (this.facing > 0 ? 2 : -3), y + 5, 2, 2);
+    if (this.blinkTimer > 0) {
+      ctx.fillStyle = COLORS.espresso;
+      ctx.fillRect(cx + (this.facing > 0 ? 2 : -3), y + 5, 2, 2);
+    }
+
+    if (progress?.isEquipped("festival_crown")) {
+      ctx.strokeStyle = COLORS.gold_bright;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(cx, y - 2 + Math.sin(timeSec * 4), 5, 2, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 }

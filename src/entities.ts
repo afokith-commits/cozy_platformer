@@ -92,11 +92,13 @@ export class BouncePad {
 
     ctx.fillStyle = COLORS.cream;
     ctx.fillRect(sx + 5, sy + 6 + press, 6, 6 - press);
-
     ctx.fillStyle = COLORS.coral;
     ctx.beginPath();
-    ctx.ellipse(sx + 8, sy + 3 + press, 8, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(sx + 8, sy + 5 + press, 8, 3.5, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.fillStyle = COLORS.cream;
+    ctx.fillRect(sx + 3, sy + 3 + press, 2, 2);
+    ctx.fillRect(sx + 10, sy + 3 + press, 2, 2);
   }
 }
 
@@ -114,13 +116,19 @@ export class Shrine {
     const sx = Math.round(this.x - camX - 8);
     const sy = Math.round(this.y - camY - 24);
 
-    ctx.fillStyle = COLORS.wood_dark;
+    ctx.fillStyle = "#7c7680";
     ctx.fillRect(sx + 2, sy + 18, 12, 6);
+    ctx.fillStyle = "#948e98";
     ctx.fillRect(sx + 4, sy + 6, 8, 12);
-
-    ctx.fillStyle = this.attuned ? COLORS.gold_bright : COLORS.sage;
+    ctx.fillStyle = "#6c6670";
     ctx.beginPath();
-    ctx.arc(sx + 8, sy + 11, this.attuned ? 4 + 1.5 * Math.sin(timeSec * 4.5) : 3, 0, Math.PI * 2);
+    ctx.moveTo(sx + 1, sy + 7);
+    ctx.lineTo(sx + 8, sy + 1);
+    ctx.lineTo(sx + 15, sy + 7);
+    ctx.fill();
+    ctx.fillStyle = this.attuned ? COLORS.gold_bright : "#525662";
+    ctx.beginPath();
+    ctx.arc(sx + 8, sy + 12, this.attuned ? 3.5 + Math.sin(timeSec * 4.5) : 2.5, 0, Math.PI * 2);
     ctx.fill();
   }
 }
@@ -190,11 +198,62 @@ export class NPC {
   public render(ctx: CanvasRenderingContext2D, camX: number, camY: number, timeSec: number): void {
     const sx = Math.round(this.x - camX - 7);
     const sy = Math.round(this.y - camY - 16);
-    const bob = Math.round(Math.sin(timeSec * 3 + this.npc_id.length) * 1.0);
+    const bob = Math.round(Math.sin(timeSec * 3 + this.npc_id.length));
 
-    ctx.fillStyle = this.style === "frog" ? COLORS.moss : this.style === "willow" ? COLORS.plum : COLORS.coral;
-    ctx.fillRect(sx + 2, sy + 4 + bob, 10, 10);
-    ctx.fillStyle = COLORS.espresso;
-    ctx.fillRect(sx + (this.facing > 0 ? 8 : 4), sy + 6 + bob, 2, 2);
+    if (this.style === "frog") {
+      ctx.fillStyle = "#62a85c";
+      ctx.fillRect(sx + 1, sy + 5 + bob, 12, 11);
+      ctx.fillStyle = "#c6e098";
+      ctx.fillRect(sx + 3, sy + 9 + bob, 8, 6);
+      ctx.fillStyle = COLORS.coral;
+      ctx.fillRect(sx + 2, sy + 1 + bob, 10, 4);
+      ctx.fillStyle = COLORS.espresso;
+      ctx.fillRect(sx + 4 + this.facing, sy + 5 + bob, 2, 2);
+      ctx.fillRect(sx + 9 + this.facing, sy + 5 + bob, 2, 2);
+    } else if (this.style === "willow") {
+      ctx.fillStyle = "#9e7a62";
+      ctx.fillRect(sx + 1, sy + 3 + bob, 12, 13);
+      ctx.fillStyle = COLORS.plum;
+      ctx.fillRect(sx + 1, sy + 9 + bob, 12, 6);
+      ctx.fillStyle = COLORS.cream;
+      ctx.fillRect(sx + 3, sy + 5 + bob, 3, 3);
+      ctx.fillRect(sx + 8, sy + 5 + bob, 3, 3);
+      ctx.fillStyle = COLORS.espresso;
+      ctx.fillRect(sx + 4 + (this.facing > 0 ? 1 : 0), sy + 6 + bob, 1, 2);
+      ctx.fillRect(sx + 9 + (this.facing > 0 ? 1 : 0), sy + 6 + bob, 1, 2);
+    } else if (this.style === "fox") {
+      ctx.fillStyle = "#d67640";
+      ctx.fillRect(sx + 2, sy + 1 + bob, 3, 4);
+      ctx.fillRect(sx + 9, sy + 1 + bob, 3, 4);
+      ctx.fillRect(sx + 2, sy + 4 + bob, 10, 11);
+      ctx.fillStyle = COLORS.sky_teal;
+      ctx.fillRect(sx + 2, sy + 10 + bob, 10, 3);
+      ctx.fillStyle = COLORS.espresso;
+      ctx.fillRect(sx + 4 + this.facing, sy + 7 + bob, 2, 2);
+      ctx.fillRect(sx + 9 + this.facing, sy + 7 + bob, 2, 2);
+    } else if (this.style === "owl") {
+      ctx.fillStyle = "#e6b464";
+      ctx.fillRect(sx + 1, sy + 3 + bob, 12, 12);
+      ctx.fillStyle = COLORS.cream;
+      ctx.fillRect(sx + 3, sy + 5 + bob, 8, 5);
+      ctx.fillStyle = COLORS.gold;
+      ctx.fillRect(sx + 6, sy + 8 + bob, 2, 3);
+      ctx.fillStyle = COLORS.espresso;
+      ctx.fillRect(sx + 4 + (this.facing > 0 ? 1 : 0), sy + 6 + bob, 2, 2);
+      ctx.fillRect(sx + 8 + (this.facing > 0 ? 1 : 0), sy + 6 + bob, 2, 2);
+    } else {
+      const floatY = Math.round(Math.sin(timeSec * 4) * 2);
+      ctx.fillStyle = "#a5f0e0";
+      ctx.beginPath();
+      ctx.arc(sx + 7, sy + 8 + floatY, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = COLORS.white;
+      ctx.beginPath();
+      ctx.arc(sx + 7, sy + 8 + floatY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = COLORS.espresso;
+      ctx.fillRect(sx + 5 + this.facing, sy + 7 + floatY, 1, 2);
+      ctx.fillRect(sx + 9 + this.facing, sy + 7 + floatY, 1, 2);
+    }
   }
 }
