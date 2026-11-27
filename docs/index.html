@@ -5,91 +5,123 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sproutbound — Cozy Micro-Platformer</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-    }
-    body {
-      background-color: #181216;
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #181216;
       color: #faf3e0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
       overflow: hidden;
-    }
-    header {
-      margin-bottom: 12px;
-      text-align: center;
-    }
-    h1 {
-      font-size: 2.2rem;
-      color: #f4c04e;
-      letter-spacing: 1px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    }
-    p.subtitle {
-      color: #7ca890;
-      font-size: 0.95rem;
-      margin-top: 4px;
     }
     #game-container {
       position: relative;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.8);
-      border-radius: 12px;
-      overflow: hidden;
-      border: 3px solid #704f3b;
-      background: #000;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #181216;
     }
     canvas {
       display: block;
-      width: min(1280px, 95vw, calc(76vh * 16 / 9));
+      width: min(100vw, calc(100vh * 16 / 9));
+      width: min(100vw, calc(100dvh * 16 / 9));
       aspect-ratio: 16 / 9;
       height: auto;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
+      touch-action: none;
     }
-    footer {
-      margin-top: 14px;
+    #controls-bar {
+      position: absolute;
+      bottom: 10px;
+      left: 12px;
       display: flex;
-      gap: 24px;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(24, 18, 22, 0.7);
       color: #dbc69e;
-      font-size: 0.88rem;
+      font-size: 12px;
+      opacity: 0.45;
+      transition: opacity 0.2s;
+      pointer-events: none;
     }
+    #game-container:hover #controls-bar { opacity: 0.9; }
     .key {
       background: #4a3429;
       color: #ffe47a;
-      padding: 2px 6px;
+      padding: 1px 5px;
       border-radius: 4px;
       font-weight: bold;
     }
+    #fs-btn {
+      position: absolute;
+      bottom: 10px;
+      right: 12px;
+      padding: 6px 12px;
+      border: 2px solid #9a7154;
+      border-radius: 8px;
+      background: rgba(46, 33, 28, 0.85);
+      color: #ffe47a;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      opacity: 0.55;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    #fs-btn:hover { opacity: 1; transform: scale(1.04); }
+    #game-container:fullscreen #controls-bar { display: none; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🌱 Sproutbound</h1>
-    <p class="subtitle">A Cozy Micro-Platformer • Built for Web & Desktop</p>
-  </header>
-
   <div id="game-container">
     <canvas id="gameCanvas"></canvas>
+
+    <div id="controls-bar">
+      <span><span class="key">A/D/←→</span> Move</span>
+      <span><span class="key">Space/W/↑</span> Jump &amp; Glide</span>
+      <span><span class="key">Shift/X</span> Dash</span>
+      <span><span class="key">E</span> Interact</span>
+      <span><span class="key">Tab</span> Bag</span>
+      <span><span class="key">M</span> Map</span>
+      <span><span class="key">J</span> Journal</span>
+      <span><span class="key">Esc</span> Menu</span>
+    </div>
+
+    <button id="fs-btn" type="button">⛶ Fullscreen [F]</button>
   </div>
 
-  <footer>
-    <div><span class="key">A / D / ← →</span> Move</div>
-    <div><span class="key">Space / W / ↑</span> Jump &amp; Glide</div>
-    <div><span class="key">Shift / X</span> Dash</div>
-    <div><span class="key">E / Enter</span> Interact</div>
-    <div><span class="key">Tab</span> Bag</div>
-    <div><span class="key">M</span> Map</div>
-    <div><span class="key">J</span> Journal</div>
-    <div><span class="key">Esc</span> Menu</div>
-  </footer>
-
   <script src="game.js"></script>
+  <script>
+    const container = document.getElementById("game-container");
+    const fsBtn = document.getElementById("fs-btn");
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        container.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+
+    fsBtn.addEventListener("click", () => {
+      toggleFullscreen();
+      fsBtn.blur(); // Prevents Spacebar from re-clicking the button
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if ((e.key === "f" || e.key === "F") && !e.repeat && !e.ctrlKey && !e.metaKey) {
+        toggleFullscreen();
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      fsBtn.textContent = document.fullscreenElement ? "✕ Exit [F]" : "⛶ Fullscreen [F]";
+    });
+  </script>
 </body>
 </html>
