@@ -28,6 +28,15 @@ export class Game {
   private irisT = 0;
   private pendingWarp: { levelId: string; spawnId: string } | null = null;
 
+  private activeTrial: {
+    trialId: string;
+    name: string;
+    timeLeft: number;
+    timeLimit: number;
+    rings: Array<{ x: number; y: number; collected: boolean }>;
+  } | null = null;
+  private trialTickAccum = 0;
+
   private uiCallbacks: UICallbacks = {
     onFastTravel: (levelId, spawnId) => this.startWarp(levelId, spawnId),
     onVolumeChange: (kind, value) => {
@@ -37,6 +46,7 @@ export class Game {
     },
     onResetSave: () => {
       this.progress.reset();
+      this.activeTrial = null;
       this.changeLevel(this.progress.current_level, this.progress.spawn_id);
       this.ui.notify("Started Fresh Adventure");
     },
@@ -85,12 +95,19 @@ export class Game {
       else if (e.key === "j" || e.key === "J") this.ui.toggleModal("journal", this.progress, (n) => this.audio.play(n));
       else if (e.key === "Escape") this.ui.toggleModal("pause", this.progress, (n) => this.audio.play(n));
       else if (e.key === " " || e.key === "w" || e.key === "W" || e.key === "ArrowUp" || e.key === "z" || e.key === "Z") {
+        if (this.player.tryWallJump(this.progress, this.audio, this.particles)) return;
         this.player.jumpBufferTimer = 0.11;
         if (!this.player.onGround && this.player.coyoteTimer <= 0 && this.player.airJumpsLeft > 0) {
           this.player.triggerDoubleJump(this.audio, this.particles);
         }
       } else if (e.key === "Shift" || e.key === "x" || e.key === "X" || e.key === "k" || e.key === "K") {
-        this.player.triggerDash(this.progress, this.audio, this.particles);
+        if ((this.keys["ArrowDown"] || this.keys["s"] || this.keys["S"]) && this.progress.isEquipped("acorn_slam")) {
+          this.player.triggerSlam(this.progress, this.audio, this.particles);
+        } else {
+          this.player.triggerDash(this.progress, this.audio, this.particles);
+        }
+      } else if (e.key === "c" || e.key === "C") {
+        this.player.triggerSlam(this.progress, this.audio, this.particles);
       } else if (e.key === "e" || e.key === "E" || e.key === "Enter") {
         this.handleInteraction();
       }
@@ -117,7 +134,8 @@ export class Game {
 
   private getNearestInteractable() {
     const px = this.player.x + this.player.width / 2, py = this.player.y + this.player.height / 2;
-    const all = [...this.level.npcs, ...this.level.shrines, ...this.level.portals, ...this.level.signs];
+    const tot = this.level.trialTotem ? [{ x: this.level.trialTotem.x, y: this.level.trialTotem.y, prompt_label: this.level.trialTotem.prompt_label, isTrial: true }] : [];
+    const all = [...this.level.npcs, ...this.level.shrines, ...this.level.portals, ...this.level.signs, ...tot];
     let best: (typeof all)[number] | null = null;
     let bestDist = INTERACT_RADIUS;
     for (const obj of all) {
@@ -129,6 +147,20 @@ export class Game {
 
   private handleInteraction(): void {
     const px = this.player.x + this.player.width / 2, py = this.player.y + this.player.height / 2;
+
+    if (this.level.trialTotem && Math.hypot(px - this.level.trialTotem.x, py - (this.level.trialTotem.y - 10)) < INTERACT_RADIUS) {
+      const t = this.level.trialTotem;
+      this.activeTrial = {
+        trialId: t.trial_id,
+        name: t.name,
+        timeLeft: t.timeLimit,
+        timeLimit: t.timeLimit,
+        rings: t.rings.map((r) => ({ ...r, collected: false }))
+      };
+      this.audio.play("trial_start");
+      this.ui.notify(`Time Trial Started: ${t.name}!`);
+      return;
+    }
 
     for (const npc of this.level.npcs) {
       if (Math.hypot(px - npc.x, py - (npc.y - 8)) < INTERACT_RADIUS) {
@@ -208,6 +240,20 @@ export class Game {
   private update(dt: number): void {
     this.ui.update(dt, this.progress, (n) => this.audio.play(n));
 
+    if (this.activeTrial) {
+      this.activeTrial.timeLeft -= dt;
+      this.trialTickAccum += dt;
+      if (this.trialTickAccum >= 1.0) {
+        this.trialTickAccum = 0;
+        if (this.activeTrial.timeLeft <= 5) this.audio.play("trial_tick");
+      }
+      if (this.activeTrial.timeLeft <= 0) {
+        this.audio.play("cancel");
+        this.ui.notify("Trial Failed! Try Again.");
+        this.activeTrial = null;
+      }
+    }
+
     if (this.irisPhase !== "idle") {
       this.irisT += dt / 0.30;
       if (this.irisT >= 1) {
@@ -234,6 +280,35 @@ export class Game {
     this.level.updateEntities(dt, this.timeSec, px);
     this.level.updateCamera(this.player.x, this.player.y, this.player.facing, dt);
     this.particles.update(dt, this.level.pixelW, this.level.pixelH);
+
+    if (this.activeTrial) {
+      const rings = this.activeTrial.rings;
+      let allCollected = true;
+      rings.forEach((ring) => {
+        if (!ring.collected && Math.hypot(px - ring.x, py - ring.y) < 18) {
+          ring.collected = true;
+          this.audio.play("orb");
+          this.particles.spawnBurst(ring.x, ring.y, COLORS.gold_bright, 10, 50);
+        }
+        if (!ring.collected) allCollected = false;
+      });
+
+      if (allCollected) {
+        const tid = this.activeTrial.trialId;
+        if (!this.progress.completed_trials.includes(tid)) {
+          this.progress.completed_trials.push(tid);
+          this.progress.gems += 10;
+          if (this.progress.completed_trials.length >= 5 && !this.progress.isUnlocked("trial_wing")) {
+            this.progress.unlockBadge("trial_wing", true, "ability");
+            this.ui.notify("Unlocked Sunburst Wings Mastery Badge!");
+          }
+          this.progress.save();
+        }
+        this.audio.play("trial_win");
+        this.ui.notify(`Trial Cleared! +10 Gems!`);
+        this.activeTrial = null;
+      }
+    }
 
     const hasMagnet = this.progress.isEquipped("magnet_charm");
     this.level.gems.forEach((g) => {
@@ -275,11 +350,32 @@ export class Game {
     this.ctx.save();
     this.ctx.scale(UI_SCALE, UI_SCALE);
     this.level.render(this.ctx, this.timeSec);
+
+    if (this.activeTrial) {
+      this.activeTrial.rings.forEach((ring) => {
+        if (!ring.collected) {
+          const rx = Math.round(ring.x - this.level.camX), ry = Math.round(ring.y - this.level.camY);
+          this.ctx.strokeStyle = COLORS.gold_bright;
+          this.ctx.lineWidth = 2;
+          this.ctx.beginPath();
+          this.ctx.arc(rx, ry, 7 + Math.sin(this.timeSec * 8) * 1.5, 0, Math.PI * 2);
+          this.ctx.stroke();
+        }
+      });
+    }
+
     this.player.render(this.ctx, this.level.camX, this.level.camY, this.progress, this.timeSec);
     this.particles.render(this.ctx, this.level.camX, this.level.camY, this.timeSec);
     this.ctx.restore();
 
-    this.ui.render(this.ctx, this.progress, this.level, this.player, this.getNearestInteractable(), this.timeSec, this.uiCallbacks);
+    const trialHud = this.activeTrial ? {
+      name: this.activeTrial.name,
+      timeLeft: this.activeTrial.timeLeft,
+      collected: this.activeTrial.rings.filter((r) => r.collected).length,
+      total: this.activeTrial.rings.length
+    } : null;
+
+    this.ui.render(this.ctx, this.progress, this.level, this.player, this.getNearestInteractable(), this.timeSec, this.uiCallbacks, trialHud);
 
     if (this.irisPhase !== "idle") {
       const maxR = Math.hypot(CANVAS_W, CANVAS_H) * 0.55;

@@ -35,6 +35,30 @@ export const ITEMS_DATA: ItemsCatalog = {
       price: 0,
       description: "Hold [Space] while falling to float gently on a maple breeze across high cliffs.",
       hint: "Gifted by Sol the Skyweaver atop the Sunlit Spire."
+    },
+    moss_claws: {
+      name: "Moss Claws",
+      price: 12,
+      description: "Cling to steep walls to slide slowly and kick off into crisp Wall-Jumps!",
+      hint: "Available in Pip's Cozy Curiosity Shop for 12 Gems."
+    },
+    acorn_slam: {
+      name: "Acorn Slam",
+      price: 14,
+      description: "Press [C] or [Down + Dash] mid-air to smash Cracked Boulders and Super-Bounce off mushrooms!",
+      hint: "Available in Pip's Cozy Curiosity Shop for 14 Gems."
+    },
+    bubble_shield: {
+      name: "Dewdrop Bubble",
+      price: 16,
+      description: "Surrounds you in a protective bubble that pops you safely out of 1 hazard or critter hit.",
+      hint: "Available in Pip's Shop—or aid Pebble the Mole in Crystal Hollow!"
+    },
+    trial_wing: {
+      name: "Sunburst Wings",
+      price: 0,
+      description: "Trial Reward: Grants an extra mid-air Jump (stacks with Feather Badge for Triple Jump!).",
+      hint: "Complete all 5 Starlight Time Trials across the Valley."
     }
   },
   trails: {
@@ -99,6 +123,18 @@ export const ITEMS_DATA: ItemsCatalog = {
       color: [176, 232, 255],
       description: "A wind-chime woven by Sol from cloud-silk and brass, singing softly in high breezes.",
       hint: "Tucked on the eastern cloud terrace of the Sunlit Spire."
+    },
+    moonstone_geode: {
+      name: "Moonstone Geode",
+      color: [168, 224, 255],
+      description: "A glowing azure crystal heart humming softly in the upper ledges of Crystal Hollow.",
+      hint: "Bounce up the western wind updraft of Crystal Hollow."
+    },
+    crystal_flute: {
+      name: "Whispering Flute",
+      color: [216, 178, 255],
+      description: "A carved amethyst pan-flute that echoes gently through deep underground arches.",
+      hint: "Ride the eastern breeze updraft to the summit of Crystal Hollow."
     }
   }
 };
@@ -108,11 +144,11 @@ export const DIALOGUES_DATA: Record<string, DialogueTree> = {
     start: "greeting",
     entry_rules: [
       {
-        condition: { shrine_count_gte: 4, not_flag: "festival_complete" },
+        condition: { shrine_count_gte: 4, trial_count_gte: 5, not_flag: "festival_complete" },
         node: "festival_finale"
       },
       {
-        condition: { trinket_count_gte: 6, not_flag: "willow_all_trinkets" },
+        condition: { trinket_count_gte: 8, not_flag: "willow_all_trinkets" },
         node: "all_trinkets"
       },
       {
@@ -157,7 +193,7 @@ export const DIALOGUES_DATA: Record<string, DialogueTree> = {
         choices: [{ label: "Got it!", close: true }]
       },
       all_trinkets: {
-        text: "My goodness—you found all six lost trinkets across the valley! You have the heart of a true cozy explorer. Take these celebratory Star Gems!",
+        text: "My goodness—you found all eight lost trinkets across the valley! You have the heart of a true cozy explorer. Take these celebratory Star Gems!",
         effects: [
           { type: "set_flag", flag: "willow_all_trinkets", value: true },
           { type: "give_gems", amount: 15 },
@@ -166,11 +202,12 @@ export const DIALOGUES_DATA: Record<string, DialogueTree> = {
         choices: [{ label: "Hooray!", close: true }]
       },
       festival_finale: {
-        text: "Look at the valley—all four shrines are glowing together! The Festival of Sprouts has begun! Wear this Sprout Festival Halo with pride, little sprout.",
+        text: "Look at the valley—all shrines glowing and all five Starlight Time Trials conquered! The Festival of Sprouts has begun! Wear this Sunburst Wing mastery badge!",
         effects: [
           { type: "set_flag", flag: "festival_complete", value: true },
+          { type: "give_badge", badge_id: "trial_wing", category: "ability" },
           { type: "give_badge", badge_id: "festival_crown", category: "trail" },
-          { type: "give_gems", amount: 25 },
+          { type: "give_gems", amount: 30 },
           { type: "save" }
         ],
         choices: [{ label: "Celebrate!", close: true }]
@@ -185,7 +222,7 @@ export const DIALOGUES_DATA: Record<string, DialogueTree> = {
     start: "welcome",
     nodes: {
       welcome: {
-        text: "Ribbit! Welcome to Pip's Traveling Satchel! I've got Feather Badges, Breeze Dashes, Clover Boots, and sparkly trails for fair gem prices!",
+        text: "Ribbit! Welcome to Pip's Traveling Satchel! I've got Feather Badges, Moss Claws, Acorn Slams, and sparkly trails for fair gem prices!",
         choices: [
           { label: "Browse Shop", open_shop: true },
           { label: "Just chatting", next: "chat" },
@@ -318,8 +355,40 @@ export const DIALOGUES_DATA: Record<string, DialogueTree> = {
         choices: [{ label: "Thank you, Sol!", close: true }]
       },
       breezy: {
-        text: "Hold [Space] in mid-air to glide on the golden breeze. Once all four shrines glow, Grandma Willow will host the Festival of Sprouts!",
+        text: "Hold [Space] in mid-air to glide on the golden breeze. Once all shrines glow and trials are conquered, Grandma Willow will host the Festival!",
         choices: [{ label: "See you below!", close: true }]
+      }
+    }
+  },
+  pebble_mole: {
+    start: "hello",
+    entry_rules: [
+      {
+        condition: { has_trinket: "moonstone_geode", not_flag: "pebble_bubble" },
+        node: "geode_gift"
+      },
+      {
+        condition: { flag: "pebble_bubble" },
+        node: "happy"
+      }
+    ],
+    nodes: {
+      hello: {
+        text: "Sniff-sniff! Welcome to Crystal Hollow! Cracked boulders hide secret gem caches—smash them with Breeze Dash or Acorn Slam! Have you spotted the Moonstone Geode up top?",
+        choices: [{ label: "I'll keep digging!", close: true }]
+      },
+      geode_gift: {
+        text: "Whoa—you found the Moonstone Geode! Its cool spring magic belongs with a brave explorer. Take this Dewdrop Bubble badge!",
+        effects: [
+          { type: "set_flag", flag: "pebble_bubble", value: true },
+          { type: "give_badge", badge_id: "bubble_shield", category: "ability" },
+          { type: "save" }
+        ],
+        choices: [{ label: "Thank you, Pebble!", close: true }]
+      },
+      happy: {
+        text: "Don't forget to test your jumps on the Crystal Hollow Time Trial totem!",
+        choices: [{ label: "On it!", close: true }]
       }
     }
   }
@@ -370,6 +439,16 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       { target_level: "sunken_ruins", target_spawn: "from_meadow", label: "To Sunken Ruins", col: 42, row: 14 }
     ],
     trinkets: [{ trinket_id: "dewdrop_bell", col: 14, row: 5 }],
+    platforms: [{ col1: 29, row1: 10, col2: 33, row2: 10, speed: 1.4, tiles: 3 }],
+    critters: [{ col: 32, row: 14, minCol: 29, maxCol: 35, style: "beetle" }],
+    trial: {
+      trial_id: "trial_meadow",
+      name: "Meadow Dash",
+      col: 8,
+      row: 14,
+      time_limit: 22,
+      rings: [[11, 12], [14, 12], [18, 7], [25, 7], [28, 11], [34, 13]]
+    },
     decor: [
       { kind: "tree", col: 2, row: 14 },
       { kind: "flower", col: 9, row: 14 },
@@ -391,7 +470,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       "#                                     *      #",
       "#                                   ######   #",
       "#             G   G                          #",
-      "#            =======        ===              #",
+      "#            === O   O ===              O    #",
       "#      ===                        ===        #",
       "#                     ===                    #",
       "#                  #######                   #",
@@ -421,6 +500,16 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       { target_level: "sunlit_spire", target_spawn: "from_canopy", label: "Ascend to Sunlit Spire", col: 37, row: 3 }
     ],
     trinkets: [{ trinket_id: "mossy_compass", col: 40, row: 3 }],
+    platforms: [{ col1: 11, row1: 7, col2: 16, row2: 7, speed: 1.6, tiles: 3 }],
+    critters: [{ col: 17, row: 15, minCol: 13, maxCol: 22, style: "beetle" }],
+    trial: {
+      trial_id: "trial_canopy",
+      name: "Canopy Breeze",
+      col: 12,
+      row: 15,
+      time_limit: 26,
+      rings: [[5, 10], [8, 6], [13, 6], [20, 7], [28, 10], [35, 10]]
+    },
     decor: [
       { kind: "tree", col: 5, row: 15 },
       { kind: "lantern", col: 19, row: 8 },
@@ -458,19 +547,30 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       start: [3, 15],
       from_meadow: [3, 15],
       shrine: [16, 15],
-      from_canopy: [40, 5]
+      from_canopy: [40, 5],
+      from_cavern: [33, 15]
     },
     shrines: [{ shrine_id: "shrine_ruins", name: "Twilight Ruins Shrine", col: 16, row: 15 }],
     npcs: [{ npc_id: "luma_spirit", name: "Luma the Spirit", dialogue_id: "luma_spirit", col: 18, row: 15, style: "spirit" }],
     signs: [{ col: 8, row: 15, text: "Ancient twilight arches cradle the valley below. Speak with Luma beside the shrine if you find the Starlight Lantern!" }],
     portals: [
       { target_level: "meadow_hub", target_spawn: "from_ruins", label: "Back to Meadow Hub", col: 2, row: 15 },
-      { target_level: "canopy_cliffs", target_spawn: "from_ruins", label: "Up to Canopy Cliffs", col: 42, row: 5 }
+      { target_level: "canopy_cliffs", target_spawn: "from_ruins", label: "Up to Canopy Cliffs", col: 42, row: 5 },
+      { target_level: "starlight_caverns", target_spawn: "from_ruins", label: "Descend to Crystal Hollow", col: 35, row: 15 }
     ],
     trinkets: [
       { trinket_id: "starlight_lantern", col: 10, row: 5 },
       { trinket_id: "fossil_acorn", col: 37, row: 15 }
     ],
+    critters: [{ col: 28, row: 15, minCol: 23, maxCol: 32, style: "crystal" }],
+    trial: {
+      trial_id: "trial_ruins",
+      name: "Twilight Sprint",
+      col: 12,
+      row: 15,
+      time_limit: 26,
+      rings: [[4, 9], [8, 7], [16, 11], [25, 13], [30, 11], [37, 11]]
+    },
     decor: [
       { kind: "pillar", col: 5, row: 15 },
       { kind: "lantern", col: 15, row: 15 },
@@ -489,12 +589,12 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       "#                                            #",
       "#     *                                      #",
       "#   ######                  ===              #",
-      "#             ===                       *    #",
-      "#                     ===             ###### #",
-      "#      ===                                   #",
+      "#             ===       U               *    #",
+      "#                     U U             ###### #",
+      "#      ===            U U                    #",
       "#                  #########                 #",
-      "#   ^                                        #",
-      "#  ===      ===                 ===          #",
+      "#   ^              U                         #",
+      "#  ===      ===    U            ===          #",
       "#                     ^                      #",
       "#        G   G       ===    G   G      ^     #",
       "#       =======            =======    ===    #",
@@ -521,11 +621,80 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       { trinket_id: "sunstone_prism", col: 7, row: 3 },
       { trinket_id: "skyward_bell", col: 42, row: 5 }
     ],
+    platforms: [{ col1: 15, row1: 9, col2: 17, row2: 9, speed: 1.5, tiles: 3 }],
+    trial: {
+      trial_id: "trial_spire",
+      name: "Skyweaver Glide",
+      col: 16,
+      row: 15,
+      time_limit: 28,
+      rings: [[10, 12], [4, 8], [8, 6], [16, 4], [23, 5], [30, 3], [41, 4]]
+    },
     decor: [
       { kind: "lantern", col: 5, row: 14 },
       { kind: "pillar", col: 20, row: 7 },
       { kind: "lantern", col: 24, row: 7 },
       { kind: "flower", col: 38, row: 14 }
+    ]
+  },
+  starlight_caverns: {
+    id: "starlight_caverns",
+    name: "Crystal Hollow",
+    theme: "cavern",
+    ambient_type: "spores",
+    grid: [
+      "##############################################",
+      "#                                            #",
+      "#    *                                  *    #",
+      "#  #####                              ###### #",
+      "#           O          O                     #",
+      "#              ---          U                #",
+      "#   ^                       U    ===         #",
+      "#  ===     ===              U                #",
+      "#                  #######  U                #",
+      "#   U                       U   ---    G  G  #",
+      "#   U     ===               U         ###### #",
+      "#   U            O         ===               #",
+      "#   U     ---              ^                 #",
+      "#   U               ===   ===   ########     #",
+      "#                               B  G * #     #",
+      "#  P      G    G                B      #     #",
+      "#################~~~####~~~###################",
+      "##############################################",
+      "##############################################"
+    ],
+    spawns: {
+      start: [3, 15],
+      from_ruins: [3, 15],
+      shrine: [15, 15]
+    },
+    shrines: [{ shrine_id: "shrine_cavern", name: "Crystal Hollow Shrine", col: 14, row: 15 }],
+    npcs: [{ npc_id: "pebble_mole", name: "Pebble the Mole", dialogue_id: "pebble_mole", col: 7, row: 15, style: "willow" }],
+    signs: [{ col: 5, row: 15, text: "Crystal Hollow! Smash Cracked Boulders [B] with Dash or [C] Acorn Slam, and glide up glowing Wind Updrafts [U]." }],
+    portals: [
+      { target_level: "sunken_ruins", target_spawn: "from_cavern", label: "Up to Sunken Ruins", col: 2, row: 15 }
+    ],
+    trinkets: [
+      { trinket_id: "moonstone_geode", col: 5, row: 2 },
+      { trinket_id: "crystal_flute", col: 41, row: 2 }
+    ],
+    platforms: [
+      { col1: 18, row1: 14, col2: 24, row2: 14, speed: 1.5, tiles: 3 },
+      { col1: 29, row1: 6, col2: 32, row2: 6, speed: 1.7, tiles: 2 }
+    ],
+    critters: [{ col: 11, row: 15, minCol: 8, maxCol: 13, style: "crystal" }],
+    trial: {
+      trial_id: "trial_cavern",
+      name: "Hollow Ascent",
+      col: 10,
+      row: 15,
+      time_limit: 30,
+      rings: [[4, 10], [4, 5], [11, 3], [23, 3], [28, 6], [34, 5], [40, 2]]
+    },
+    decor: [
+      { kind: "lantern", col: 13, row: 15 },
+      { kind: "pillar", col: 20, row: 7 },
+      { kind: "lantern", col: 38, row: 15 }
     ]
   }
 };

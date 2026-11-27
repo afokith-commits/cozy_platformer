@@ -45,6 +45,7 @@ export interface DialogueTree {
       trinket_count_gte?: number;
       shrine_count_gte?: number;
       badge_count_gte?: number;
+      trial_count_gte?: number;
       has_trinket?: string;
       flag?: string;
       not_flag?: string;
@@ -52,6 +53,32 @@ export interface DialogueTree {
     node: string;
   }>;
   nodes: Record<string, DialogueNode>;
+}
+
+export interface PlatformDef {
+  col1: number;
+  row1: number;
+  col2: number;
+  row2: number;
+  speed: number;
+  tiles?: number;
+}
+
+export interface CritterDef {
+  col: number;
+  row: number;
+  minCol: number;
+  maxCol: number;
+  style?: "beetle" | "crystal";
+}
+
+export interface TrialDef {
+  trial_id: string;
+  name: string;
+  col: number;
+  row: number;
+  time_limit: number;
+  rings: Array<[number, number]>;
 }
 
 export interface LevelData {
@@ -67,6 +94,9 @@ export interface LevelData {
   portals?: Array<{ target_level: string; target_spawn: string; label: string; col: number; row: number }>;
   trinkets?: Array<{ trinket_id: string; col: number; row: number }>;
   decor?: Array<{ kind: string; col: number; row: number }>;
+  platforms?: PlatformDef[];
+  critters?: CritterDef[];
+  trial?: TrialDef;
 }
 
 export interface Rect {
@@ -77,7 +107,7 @@ export interface Rect {
 }
 
 export interface CampaignRule {
-  type: "flag" | "shrine" | "trinket" | "badge" | "badge_count_gte" | "trinket_count_gte" | "shrine_count_gte";
+  type: "flag" | "shrine" | "trinket" | "badge" | "badge_count_gte" | "trinket_count_gte" | "shrine_count_gte" | "trial_count_gte";
   flag?: string;
   shrine_id?: string;
   trinket_id?: string;

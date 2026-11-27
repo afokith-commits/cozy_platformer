@@ -26,6 +26,11 @@ export const DOUBLE_JUMP_VELOCITY = -218.0;
 export const JUMP_CUT_MULT = 0.48;
 export const BOUNCE_PAD_VELOCITY = -315.0;
 
+export const SLAM_VELOCITY = 390.0;
+export const WALL_SLIDE_SPEED = 44.0;
+export const WALL_JUMP_VX = 142.0;
+export const WALL_JUMP_VY = -228.0;
+
 export const COYOTE_TIME = 0.11;
 export const JUMP_BUFFER_TIME = 0.11;
 

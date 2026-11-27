@@ -9,6 +9,8 @@ export class GameProgress {
   public unlocked_badges: string[] = [];
   public equipped_badges: string[] = [];
   public unlocked_shrines: string[] = ["shrine_meadow"];
+  public completed_trials: string[] = [];
+  public broken_blocks: string[] = [];
   public flags: Record<string, boolean> = {};
   public current_level = "meadow_hub";
   public spawn_id = "start";
@@ -29,6 +31,10 @@ export class GameProgress {
 
   public hasTrinket(trinketId: string): boolean {
     return this.trinkets.includes(trinketId);
+  }
+
+  public hasTrial(trialId: string): boolean {
+    return this.completed_trials.includes(trialId);
   }
 
   public toggleBadge(badgeId: string, category = "ability"): boolean {
@@ -69,6 +75,8 @@ export class GameProgress {
       if (Array.isArray(d.unlocked_shrines) && d.unlocked_shrines.length > 0) {
         this.unlocked_shrines = d.unlocked_shrines;
       }
+      if (Array.isArray(d.completed_trials)) this.completed_trials = d.completed_trials;
+      if (Array.isArray(d.broken_blocks)) this.broken_blocks = d.broken_blocks;
       if (d.flags && typeof d.flags === "object") this.flags = d.flags;
       if (typeof d.current_level === "string") this.current_level = d.current_level;
       if (typeof d.spawn_id === "string") this.spawn_id = d.spawn_id;
@@ -85,6 +93,8 @@ export class GameProgress {
     this.unlocked_badges = [];
     this.equipped_badges = [];
     this.unlocked_shrines = ["shrine_meadow"];
+    this.completed_trials = [];
+    this.broken_blocks = [];
     this.flags = {};
     this.current_level = "meadow_hub";
     this.spawn_id = "start";

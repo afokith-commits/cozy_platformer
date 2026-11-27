@@ -171,14 +171,21 @@ export class ParticleSystem {
   }
 
   public render(ctx: CanvasRenderingContext2D, camX: number, camY: number, timeSec: number): void {
-    // Ambient particles
+    // Ambient particles with soft glow
     this.ambient.forEach((a) => {
       const sx = Math.round(a.x - camX);
       const sy = Math.round(a.y - camY);
       const pulse = 0.5 + 0.5 * Math.sin(timeSec * 3 + a.phase);
+      const r = Math.max(1, a.size * (0.7 + 0.4 * pulse));
+      if (a.typeIdx !== 1) {
+        ctx.fillStyle = a.typeIdx === 0 ? "rgba(255, 228, 122, 0.22)" : "rgba(135, 235, 220, 0.22)";
+        ctx.beginPath();
+        ctx.arc(sx, sy, r * 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.fillStyle = a.typeIdx === 0 ? COLORS.gold_bright : a.typeIdx === 1 ? COLORS.coral : COLORS.sky_teal;
       ctx.beginPath();
-      ctx.arc(sx, sy, Math.max(1, a.size * (0.7 + 0.4 * pulse)), 0, Math.PI * 2);
+      ctx.arc(sx, sy, r, 0, Math.PI * 2);
       ctx.fill();
     });
 

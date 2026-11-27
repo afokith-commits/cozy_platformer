@@ -79,14 +79,41 @@ export const CAMPAIGN_CHAPTERS: CampaignChapterDef[] = [
     ],
   },
   {
-    id: "ch4_festival",
-    title: "Festival of Sprouts",
-    summary: "With all four valley shrines lit, return to Grandma Willow to celebrate the Festival!",
+    id: "ch4_cavern",
+    title: "Crystal Hollow",
+    summary: "Descend beneath the ruins to Crystal Hollow, aid Pebble the Mole, and attune the Deep Shrine.",
+    objectives: [
+      {
+        id: "attune_cavern",
+        label: "Attune the Crystal Hollow Shrine",
+        rule: { type: "shrine", shrine_id: "shrine_cavern" },
+      },
+      {
+        id: "pebble_gift",
+        label: "Recover the Moonstone Geode for Pebble",
+        rule: { type: "flag", flag: "pebble_bubble" },
+      },
+      {
+        id: "all_trials",
+        label: "Conquer all 5 Starlight Time Trials",
+        rule: { type: "trial_count_gte", count: 5 },
+      },
+    ],
+  },
+  {
+    id: "ch5_festival",
+    title: "Heart of the Hollow",
+    summary: "With all 5 shrines and 8 trinkets recovered, return to Grandma Willow for the Festival!",
     objectives: [
       {
         id: "all_shrines",
-        label: "Attune all 4 Shrines across the Valley",
-        rule: { type: "shrine_count_gte", count: 4 },
+        label: "Attune all 5 Shrines across the Valley",
+        rule: { type: "shrine_count_gte", count: 5 },
+      },
+      {
+        id: "all_trinkets",
+        label: "Collect all 8 Lost Trinkets",
+        rule: { type: "trinket_count_gte", count: 8 },
       },
       {
         id: "willow_festival",
@@ -104,7 +131,7 @@ export const MAP_NODES: CampaignMapNode[] = [
     spawn_id: "shrine",
     name: "Meadow Hub",
     subtitle: "Warm hearth, Pip's stall, and Grandma Willow's garden.",
-    pos: [330, 395],
+    pos: [310, 395],
     color: "#6a9e5c",
   },
   {
@@ -113,7 +140,7 @@ export const MAP_NODES: CampaignMapNode[] = [
     spawn_id: "shrine",
     name: "Canopy Cliffs",
     subtitle: "Breezy treetop bridges, bounce mushrooms, and Bramble's lookout.",
-    pos: [555, 290],
+    pos: [520, 275],
     color: "#6dbfc2",
   },
   {
@@ -122,7 +149,7 @@ export const MAP_NODES: CampaignMapNode[] = [
     spawn_id: "shrine",
     name: "Sunken Ruins",
     subtitle: "Twilight mossy arches lit by firefly spirits and ancient lanterns.",
-    pos: [895, 395],
+    pos: [785, 330],
     color: "#84619c",
   },
   {
@@ -131,8 +158,17 @@ export const MAP_NODES: CampaignMapNode[] = [
     spawn_id: "shrine",
     name: "Sunlit Spire",
     subtitle: "Golden-hour cloud-top sanctuary home to Sol the Skyweaver.",
-    pos: [715, 215],
+    pos: [665, 205],
     color: "#f4c04e",
+  },
+  {
+    level_id: "starlight_caverns",
+    shrine_id: "shrine_cavern",
+    spawn_id: "shrine",
+    name: "Crystal Hollow",
+    subtitle: "Deep underground crystal grotto home to Pebble the Mole.",
+    pos: [935, 395],
+    color: "#5bb4b8",
   },
 ];
 
@@ -153,6 +189,8 @@ export class CampaignManager {
         return progress.trinkets.length >= (rule.count ?? 0);
       case "shrine_count_gte":
         return progress.unlocked_shrines.length >= (rule.count ?? 0);
+      case "trial_count_gte":
+        return progress.completed_trials.length >= (rule.count ?? 0);
       default:
         return false;
     }

@@ -62,6 +62,12 @@ export class AudioManager {
     } catch { /* Audio fallback */ }
   }
 
+  public playArpeggio(freqs: number[], duration = 0.08, gainVal = 0.2) {
+    freqs.forEach((f, idx) => {
+      setTimeout(() => this.playTone(f, f * 1.001, duration, "sine", gainVal), idx * 75);
+    });
+  }
+
   public play(sfxName: string) {
     switch (sfxName) {
       case "jump":
@@ -101,6 +107,33 @@ export class AudioManager {
         break;
       case "buy":
         this.playTone(523.25, 1046.5, 0.25, "sine", 0.25);
+        break;
+      case "orb":
+        this.playArpeggio([783.99, 1046.5], 0.045, 0.25);
+        break;
+      case "crumble":
+        this.playTone(210, 120, 0.12, "triangle", 0.16);
+        break;
+      case "slam":
+        this.playTone(170, 55, 0.16, "triangle", 0.30);
+        break;
+      case "smash":
+        this.playTone(260, 70, 0.18, "sawtooth", 0.22);
+        break;
+      case "bubble":
+        this.playTone(320, 780, 0.14, "sine", 0.28);
+        break;
+      case "stomp":
+        this.playTone(260, 560, 0.12, "sine", 0.26);
+        break;
+      case "trial_start":
+        this.playArpeggio([440, 554.37, 659.25], 0.07, 0.28);
+        break;
+      case "trial_tick":
+        this.playTone(680, 640, 0.05, "sine", 0.16);
+        break;
+      case "trial_win":
+        this.playArpeggio([523.25, 659.25, 783.99, 1046.5, 1318.5], 0.07, 0.30);
         break;
       default:
         this.playTone(300, 400, 0.1, "triangle", 0.15);

@@ -34,7 +34,7 @@ export class UIOverlay {
   public selectedChoiceIdx = 0;
   private dialogueTree: DialogueTree | null = null;
 
-  private invTab: "badges" | "trinkets" = "badges";
+  private invTab: "abilities" | "trails" | "trinkets" = "abilities";
   private focusIdx = 0;
   private confirmReset = false;
   private draggingSlider: "music" | "sfx" | null = null;
@@ -85,6 +85,7 @@ export class UIOverlay {
       if (c.trinket_count_gte !== undefined && progress.trinkets.length < c.trinket_count_gte) ok = false;
       if (c.shrine_count_gte !== undefined && progress.unlocked_shrines.length < c.shrine_count_gte) ok = false;
       if (c.badge_count_gte !== undefined && progress.unlocked_badges.length < c.badge_count_gte) ok = false;
+      if (c.trial_count_gte !== undefined && progress.completed_trials.length < c.trial_count_gte) ok = false;
       if (c.has_trinket && !progress.hasTrinket(c.has_trinket)) ok = false;
       if (c.flag && !progress.flags[c.flag]) ok = false;
       if (c.not_flag && progress.flags[c.not_flag]) ok = false;
@@ -158,11 +159,12 @@ export class UIOverlay {
     return list;
   }
 
-  private getBadgeEntries() {
-    return [
-      ...Object.entries(ITEMS_DATA.abilities).map(([id, d]) => ({ id, cat: "ability" as const, ...d })),
-      ...Object.entries(ITEMS_DATA.trails).map(([id, d]) => ({ id, cat: "trail" as const, ...d }))
-    ];
+  private getAbilityEntries() {
+    return Object.entries(ITEMS_DATA.abilities).map(([id, d]) => ({ id, cat: "ability" as const, ...d }));
+  }
+
+  private getTrailEntries() {
+    return Object.entries(ITEMS_DATA.trails).map(([id, d]) => ({ id, cat: "trail" as const, ...d }));
   }
 
   public handleKeyDown(key: string, progress: GameProgress, cb: UICallbacks): boolean {
@@ -190,12 +192,19 @@ export class UIOverlay {
 
     if (this.activeModal === "inventory") {
       if (key === "Tab" || key === "i" || key === "I") { this.activeModal = "none"; cb.onPlaySfx("cancel"); return true; }
-      if (isLeft || isRight) { this.invTab = this.invTab === "badges" ? "trinkets" : "badges"; this.focusIdx = 0; cb.onPlaySfx("blip"); }
-      const len = this.invTab === "badges" ? this.getBadgeEntries().length : Object.keys(ITEMS_DATA.trinkets).length;
+      const tabs: Array<"abilities" | "trails" | "trinkets"> = ["abilities", "trails", "trinkets"];
+      if (isLeft || isRight) {
+        const curIdx = tabs.indexOf(this.invTab);
+        const nextIdx = isRight ? (curIdx + 1) % tabs.length : (curIdx - 1 + tabs.length) % tabs.length;
+        this.invTab = tabs[nextIdx];
+        this.focusIdx = 0;
+        cb.onPlaySfx("blip");
+      }
+      const len = this.invTab === "abilities" ? this.getAbilityEntries().length : this.invTab === "trails" ? this.getTrailEntries().length : Object.keys(ITEMS_DATA.trinkets).length;
       if (isUp) { this.focusIdx = (this.focusIdx - 1 + len) % len; cb.onPlaySfx("blip"); }
       if (isDown) { this.focusIdx = (this.focusIdx + 1 + len) % len; cb.onPlaySfx("blip"); }
-      if (isConfirm && this.invTab === "badges") {
-        const e = this.getBadgeEntries()[this.focusIdx];
+      if (isConfirm && this.invTab !== "trinkets") {
+        const e = this.invTab === "abilities" ? this.getAbilityEntries()[this.focusIdx] : this.getTrailEntries()[this.focusIdx];
         if (e && progress.isUnlocked(e.id)) {
           const on = progress.toggleBadge(e.id, e.cat);
           progress.save(); cb.onPlaySfx("equip");
@@ -325,16 +334,22 @@ export class UIOverlay {
     }
   }
 
-  private drawPanel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, style: "parchment" | "wood" | "dark" = "parchment"): void {
-    ctx.fillStyle = "rgba(20,14,18,0.35)";
-    ctx.beginPath(); ctx.roundRect(x + 4, y + 5, w, h, 12); ctx.fill();
-    ctx.fillStyle = style === "parchment" ? COLORS.parchment : style === "wood" ? COLORS.wood_mid : "#362a2e";
+  private drawPanel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, style: "parchment" | "wood" | "dark" = "parchment", rivets = false): void {
+    ctx.fillStyle = "rgba(20,14,18,0.42)";
+    ctx.beginPath(); ctx.roundRect(x + 4, y + 6, w, h, 12); ctx.fill();
+    ctx.fillStyle = style === "parchment" ? COLORS.parchment : style === "wood" ? COLORS.wood_mid : "#32262b";
     ctx.strokeStyle = style === "parchment" ? COLORS.wood_dark : COLORS.espresso;
     ctx.lineWidth = 3;
     ctx.beginPath(); ctx.roundRect(x, y, w, h, 12); ctx.fill(); ctx.stroke();
     ctx.strokeStyle = style === "parchment" ? COLORS.cream : style === "wood" ? COLORS.wood_light : "#564448";
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 9); ctx.stroke();
+    if (rivets) {
+      ctx.fillStyle = COLORS.gold;
+      [[x + 12, y + 12], [x + w - 12, y + 12], [x + 12, y + h - 12], [x + w - 12, y + h - 12]].forEach(([rx, ry]) => {
+        ctx.beginPath(); ctx.arc(rx, ry, 3, 0, Math.PI * 2); ctx.fill();
+      });
+    }
   }
 
   private drawGemIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
@@ -348,34 +363,82 @@ export class UIOverlay {
   }
 
   private drawBadgeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, id: string, r = 15): void {
-    ctx.fillStyle = id === "feather_badge" ? "#ecf5f2" : id === "breeze_dash" ? "#d6f0f2" : id === "clover_boots" ? "#e2f2d4" : id === "magnet_charm" ? "#f8e4e0" : id === "glide_leaf" ? "#fce8d8" : COLORS.parchment;
-    ctx.strokeStyle = COLORS.wood_dark;
-    ctx.lineWidth = 2;
+    ctx.fillStyle = COLORS.espresso; ctx.beginPath(); ctx.arc(cx, cy + 1, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = id.includes("trail") || id === "festival_crown" ? COLORS.parchment : "#eef6f2";
+    ctx.strokeStyle = COLORS.wood_dark; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = id.includes("sparkle") || id === "festival_crown" ? COLORS.gold : id.includes("petal") || id === "glide_leaf" || id === "magnet_charm" ? COLORS.coral : id.includes("starlight") ? COLORS.plum : id === "clover_boots" ? COLORS.moss : COLORS.sky_teal;
-    ctx.beginPath(); ctx.arc(cx, cy, r * 0.48, 0, Math.PI * 2); ctx.fill();
+
+    if (id === "feather_badge") {
+      ctx.fillStyle = COLORS.sky_teal; ctx.beginPath(); ctx.ellipse(cx, cy, 5, 9, 0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = COLORS.cream; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx - 4, cy + 6); ctx.lineTo(cx + 4, cy - 6); ctx.stroke();
+    } else if (id === "breeze_dash") {
+      ctx.strokeStyle = COLORS.sky_teal; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cx - 7, cy - 3); ctx.lineTo(cx + 7, cy - 3); ctx.moveTo(cx - 4, cy + 2); ctx.lineTo(cx + 8, cy + 2); ctx.stroke();
+    } else if (id === "clover_boots") {
+      ctx.fillStyle = COLORS.moss;
+      ctx.beginPath(); ctx.arc(cx - 3.5, cy - 1, 4, 0, Math.PI * 2); ctx.arc(cx + 3.5, cy - 1, 4, 0, Math.PI * 2); ctx.arc(cx, cy - 5, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(cx - 1, cy + 2, 2, 6);
+    } else if (id === "magnet_charm") {
+      ctx.strokeStyle = COLORS.coral; ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.arc(cx, cy - 1, 6, Math.PI, 0); ctx.stroke();
+      ctx.fillStyle = COLORS.wood_dark; ctx.fillRect(cx - 7.5, cy, 3, 5); ctx.fillRect(cx + 4.5, cy, 3, 5);
+    } else if (id === "glide_leaf") {
+      ctx.fillStyle = COLORS.coral; ctx.beginPath(); ctx.ellipse(cx, cy, 8, 5, -0.3, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx - 6, cy + 2); ctx.lineTo(cx + 6, cy - 2); ctx.stroke();
+    } else if (id === "moss_claws") {
+      ctx.strokeStyle = COLORS.moss; ctx.lineWidth = 2.4;
+      [-4, 0, 4].forEach((ox) => { ctx.beginPath(); ctx.moveTo(cx + ox - 2, cy - 5); ctx.lineTo(cx + ox + 2, cy + 6); ctx.stroke(); });
+    } else if (id === "acorn_slam") {
+      ctx.fillStyle = COLORS.gold; ctx.beginPath(); ctx.arc(cx, cy + 2, 5.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = COLORS.wood_dark; ctx.fillRect(cx - 6, cy - 4, 12, 4); ctx.fillRect(cx - 1, cy - 7, 2, 3);
+    } else if (id === "bubble_shield") {
+      ctx.fillStyle = "rgba(109, 191, 194, 0.45)"; ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = COLORS.sky_teal; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = COLORS.white; ctx.beginPath(); ctx.arc(cx - 3, cy - 3, 2, 0, Math.PI * 2); ctx.fill();
+    } else if (id === "trial_wing" || id === "festival_crown") {
+      ctx.fillStyle = COLORS.gold; ctx.beginPath(); ctx.ellipse(cx - 4, cy, 4, 7, -0.4, 0, Math.PI * 2); ctx.ellipse(cx + 4, cy, 4, 7, 0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = COLORS.gold_bright; ctx.beginPath(); ctx.arc(cx, cy - 2, 3, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.fillStyle = id.includes("petal") ? COLORS.coral : id.includes("starlight") ? COLORS.plum : COLORS.gold;
+      ctx.beginPath(); ctx.arc(cx - 3, cy + 3, 3.5, 0, Math.PI * 2); ctx.arc(cx + 3, cy - 3, 4, 0, Math.PI * 2); ctx.fill();
+    }
   }
 
   public render(
     ctx: CanvasRenderingContext2D, progress: GameProgress, level: Level, player: Player,
-    promptObj: { x: number; y: number; prompt_label: string } | null, timeSec: number, cb: UICallbacks
+    promptObj: { x: number; y: number; prompt_label: string } | null, timeSec: number, cb: UICallbacks,
+    activeTrial?: { name: string; timeLeft: number; collected: number; total: number } | null
   ): void {
     this.hitRegions = [];
     this.sliderBoxes = {};
 
     // Top-left Parchment HUD Card
     const totalTrinkets = Object.keys(ITEMS_DATA.trinkets).length;
-    this.drawPanel(ctx, 18, 16, 370, 78, "parchment");
+    this.drawPanel(ctx, 18, 16, 370, 78, "parchment", true);
     this.drawGemIcon(ctx, 48, 43, Math.round(12 * this.gemScale));
     ctx.fillStyle = COLORS.espresso;
-    ctx.font = "bold 24px system-ui, sans-serif";
-    ctx.fillText(`${progress.gems}`, 70, 51);
+    ctx.font = "bold 24px Georgia, serif";
+    ctx.fillText(`${progress.gems}`, 70, 52);
     ctx.fillStyle = COLORS.wood_mid;
-    ctx.font = "bold 14px system-ui, sans-serif";
+    ctx.font = "bold 14px Georgia, serif";
     ctx.fillText(`Trinkets ${progress.trinkets.length}/${totalTrinkets}`, 142, 47);
     ctx.fillStyle = COLORS.moss;
     ctx.font = "bold 13px system-ui, sans-serif";
     ctx.fillText(`${level.name}  •  ${this.campaign.currentObjectiveText(progress)}`, 32, 76);
+
+    // Active Trial HUD Banner
+    if (activeTrial) {
+      const tw = 280, tx = (CANVAS_W - tw) / 2, ty = 16;
+      this.drawPanel(ctx, tx, ty, tw, 56, "wood", true);
+      ctx.fillStyle = COLORS.gold_bright;
+      ctx.font = "bold 15px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`⚡ ${activeTrial.name}`, tx + tw / 2, ty + 22);
+      ctx.fillStyle = COLORS.cream;
+      ctx.font = "bold 14px system-ui, sans-serif";
+      ctx.fillText(`Time: ${Math.ceil(activeTrial.timeLeft)}s   Rings: ${activeTrial.collected}/${activeTrial.total}`, tx + tw / 2, ty + 42);
+      ctx.textAlign = "left";
+    }
 
     // Top-right Wood Action Pills
     const pills: Array<{ label: string; modal: ModalKind; x: number; w: number }> = [
@@ -387,7 +450,7 @@ export class UIOverlay {
     pills.forEach((p) => {
       this.drawPanel(ctx, p.x, 16, p.w, 38, this.activeModal === p.modal ? "parchment" : "wood");
       ctx.fillStyle = this.activeModal === p.modal ? COLORS.espresso : COLORS.cream;
-      ctx.font = "bold 14px system-ui, sans-serif";
+      ctx.font = "bold 14px Georgia, serif";
       ctx.textAlign = "center"; ctx.fillText(p.label, p.x + p.w / 2, 40); ctx.textAlign = "left";
       this.hitRegions.push({ x: p.x, y: 16, w: p.w, h: 38, onClick: () => this.toggleModal(p.modal, progress, cb.onPlaySfx) });
     });
@@ -411,9 +474,9 @@ export class UIOverlay {
     if (promptObj && !this.isModalOpen) {
       const px = Math.max(150, Math.min(CANVAS_W - 150, (promptObj.x - level.camX) * UI_SCALE));
       const py = Math.max(54, Math.min(CANVAS_H - 60, (promptObj.y - 26 - level.camY) * UI_SCALE + Math.sin(timeSec * 4) * 4));
-      ctx.font = "bold 16px system-ui, sans-serif";
+      ctx.font = "bold 16px Georgia, serif";
       const w = Math.max(130, ctx.measureText(promptObj.prompt_label).width + 66);
-      this.drawPanel(ctx, px - w / 2, py - 20, w, 40, "parchment");
+      this.drawPanel(ctx, px - w / 2, py - 20, w, 40, "parchment", true);
       ctx.fillStyle = COLORS.wood_dark;
       ctx.beginPath(); ctx.roundRect(px - w / 2 + 10, py - 12, 24, 24, 5); ctx.fill();
       ctx.fillStyle = COLORS.gold_bright;
@@ -431,9 +494,9 @@ export class UIOverlay {
 
     if (this.toastTimer > 0 && this.toastText) {
       ctx.globalAlpha = Math.min(1, this.toastTimer * 2.5);
-      ctx.font = "bold 18px system-ui, sans-serif";
+      ctx.font = "bold 18px Georgia, serif";
       const tw = Math.max(240, ctx.measureText(this.toastText).width + 48);
-      this.drawPanel(ctx, CANVAS_W / 2 - tw / 2, 16, tw, 44, "parchment");
+      this.drawPanel(ctx, CANVAS_W / 2 - tw / 2, 16, tw, 44, "parchment", true);
       ctx.fillStyle = COLORS.espresso;
       ctx.textAlign = "center"; ctx.fillText(this.toastText, CANVAS_W / 2, 44); ctx.textAlign = "left";
       ctx.globalAlpha = 1;
@@ -444,22 +507,22 @@ export class UIOverlay {
     ctx.fillStyle = "rgba(24, 18, 22, 0.72)";
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     const mw = 980, mh = 560, mx = (CANVAS_W - mw) / 2, my = (CANVAS_H - mh) / 2;
-    this.drawPanel(ctx, mx, my, mw, mh, "parchment");
+    this.drawPanel(ctx, mx, my, mw, mh, "parchment", true);
     ctx.fillStyle = COLORS.espresso;
-    ctx.font = "bold 26px system-ui, sans-serif";
+    ctx.font = "bold 26px Georgia, serif";
     ctx.fillText(title, mx + 34, my + 48);
 
     const cx = mx + mw - 122, cy = my + 20;
     this.drawPanel(ctx, cx, cy, 94, 34, "wood");
     ctx.fillStyle = COLORS.cream;
-    ctx.font = "bold 14px system-ui, sans-serif";
+    ctx.font = "bold 14px Georgia, serif";
     ctx.textAlign = "center"; ctx.fillText("Close [Esc]", cx + 47, cy + 22); ctx.textAlign = "left";
     this.hitRegions.push({ x: cx, y: cy, w: 94, h: 34, onClick: () => { this.activeModal = "none"; cb.onPlaySfx("cancel"); } });
     return { mx, my, mw, mh };
   }
 
   private drawPortrait(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-    this.drawPanel(ctx, x, y, 120, 120, "wood");
+    this.drawPanel(ctx, x, y, 120, 120, "wood", true);
     const cx = x + 60, cy = y + 60;
     if (this.currentStyle === "frog") {
       ctx.fillStyle = "#62a85c"; ctx.beginPath(); ctx.arc(cx, cy + 6, 30, 0, Math.PI * 2); ctx.fill();
@@ -478,6 +541,12 @@ export class UIOverlay {
       ctx.fillStyle = "#e6b464"; ctx.beginPath(); ctx.arc(cx, cy + 4, 30, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = COLORS.cream; ctx.beginPath(); ctx.ellipse(cx, cy, 22, 14, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = COLORS.espresso; ctx.beginPath(); ctx.arc(cx - 10, cy - 2, 4, 0, Math.PI * 2); ctx.arc(cx + 10, cy - 2, 4, 0, Math.PI * 2); ctx.fill();
+    } else if (this.currentStyle === "mole") {
+      ctx.fillStyle = "#5c4a4e"; ctx.beginPath(); ctx.arc(cx, cy + 10, 28, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = COLORS.gold; ctx.beginPath(); ctx.ellipse(cx, cy - 16, 26, 12, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = COLORS.gold_bright; ctx.beginPath(); ctx.arc(cx + 12, cy - 22, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = COLORS.coral; ctx.beginPath(); ctx.arc(cx + 2, cy + 14, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = COLORS.espresso; ctx.beginPath(); ctx.arc(cx - 10, cy + 2, 4, 0, Math.PI * 2); ctx.arc(cx + 10, cy + 2, 4, 0, Math.PI * 2); ctx.fill();
     } else if (this.currentStyle === "spirit") {
       ctx.fillStyle = "#a5f0e0"; ctx.beginPath(); ctx.arc(cx, cy, 30, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = COLORS.white; ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.fill();
@@ -492,20 +561,20 @@ export class UIOverlay {
     ctx.fillStyle = "rgba(24, 18, 22, 0.45)";
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     const boxW = 920, boxH = 240, boxX = (CANVAS_W - boxW) / 2, boxY = CANVAS_H - boxH - 28;
-    this.drawPanel(ctx, boxX, boxY, boxW, boxH, "parchment");
+    this.drawPanel(ctx, boxX, boxY, boxW, boxH, "parchment", true);
     this.drawPanel(ctx, boxX + 24, boxY - 22, 240, 38, "wood");
     ctx.fillStyle = COLORS.gold_bright;
-    ctx.font = "bold 18px system-ui, sans-serif";
+    ctx.font = "bold 18px Georgia, serif";
     ctx.fillText(this.currentSpeaker, boxX + 40, boxY + 2);
 
     this.drawPortrait(ctx, boxX + 28, boxY + 42);
     ctx.fillStyle = COLORS.espresso;
-    ctx.font = "21px system-ui, sans-serif";
+    ctx.font = "20px Georgia, serif";
     this.wrapText(ctx, this.currentText.slice(0, Math.floor(this.revealedChars)), boxX + 170, boxY + 52, boxW - 200, 28);
 
     if (this.revealedChars < this.currentText.length) {
       ctx.fillStyle = COLORS.wood_mid;
-      ctx.font = "bold 14px system-ui, sans-serif";
+      ctx.font = "bold 14px Georgia, serif";
       ctx.fillText("Press [E] / Click to continue...", boxX + boxW - 230, boxY + boxH - 22);
       this.hitRegions.push({ x: boxX, y: boxY, w: boxW, h: boxH, onClick: () => { this.revealedChars = this.currentText.length; } });
       return;
@@ -519,7 +588,7 @@ export class UIOverlay {
       this.drawPanel(ctx, bx, by, bw, bh, "wood");
       if (sel) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.strokeRect(bx - 1, by - 1, bw + 2, bh + 2); }
       ctx.fillStyle = sel ? COLORS.gold_bright : COLORS.cream;
-      ctx.font = "bold 15px system-ui, sans-serif";
+      ctx.font = "bold 15px Georgia, serif";
       ctx.textAlign = "center"; ctx.fillText(ch.label, bx + bw / 2, by + 25); ctx.textAlign = "left";
       this.hitRegions.push({ x: bx, y: by, w: bw, h: bh, onClick: () => { this.selectedChoiceIdx = idx; this.selectChoice(idx, progress, cb.onPlaySfx); } });
     });
@@ -527,21 +596,23 @@ export class UIOverlay {
 
   private renderInventory(ctx: CanvasRenderingContext2D, progress: GameProgress, cb: UICallbacks): void {
     const { mx, my, mw, mh } = this.renderModalFrame(ctx, "Traveler's Backpack", cb);
-    const tabs: Array<{ id: "badges" | "trinkets"; label: string; x: number }> = [
-      { id: "badges", label: "Badges & Trails", x: mx + 34 },
-      { id: "trinkets", label: `Trinkets (${progress.trinkets.length}/${Object.keys(ITEMS_DATA.trinkets).length})`, x: mx + 234 }
+    const tabs: Array<{ id: "abilities" | "trails" | "trinkets"; label: string; x: number }> = [
+      { id: "abilities", label: "Abilities", x: mx + 34 },
+      { id: "trails", label: "Trails", x: mx + 204 },
+      { id: "trinkets", label: `Trinkets (${progress.trinkets.length}/${Object.keys(ITEMS_DATA.trinkets).length})`, x: mx + 374 }
     ];
     tabs.forEach((t) => {
-      this.drawPanel(ctx, t.x, my + 70, 186, 38, this.invTab === t.id ? "wood" : "parchment");
+      this.drawPanel(ctx, t.x, my + 70, 156, 38, this.invTab === t.id ? "wood" : "parchment");
       ctx.fillStyle = this.invTab === t.id ? COLORS.gold_bright : COLORS.espresso;
-      ctx.font = "bold 15px system-ui, sans-serif";
-      ctx.textAlign = "center"; ctx.fillText(t.label, t.x + 93, my + 94); ctx.textAlign = "left";
-      this.hitRegions.push({ x: t.x, y: my + 70, w: 186, h: 38, onClick: () => { this.invTab = t.id; this.focusIdx = 0; cb.onPlaySfx("blip"); } });
+      ctx.font = "bold 15px Georgia, serif";
+      ctx.textAlign = "center"; ctx.fillText(t.label, t.x + 78, my + 94); ctx.textAlign = "left";
+      this.hitRegions.push({ x: t.x, y: my + 70, w: 156, h: 38, onClick: () => { this.invTab = t.id; this.focusIdx = 0; cb.onPlaySfx("blip"); } });
     });
 
     let footerText = "";
-    if (this.invTab === "badges") {
-      this.getBadgeEntries().forEach((entry, idx) => {
+    if (this.invTab === "abilities" || this.invTab === "trails") {
+      const entries = this.invTab === "abilities" ? this.getAbilityEntries() : this.getTrailEntries();
+      entries.forEach((entry, idx) => {
         const col = idx % 2, row = Math.floor(idx / 2);
         const x = mx + 34 + col * 462, y = my + 122 + row * 64, w = 446, h = 56;
         const owned = progress.isUnlocked(entry.id), eq = progress.isEquipped(entry.id), focused = idx === this.focusIdx;
@@ -549,7 +620,7 @@ export class UIOverlay {
         if (focused) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2); }
         if (owned) this.drawBadgeIcon(ctx, x + 28, y + 28, entry.id, 14);
         ctx.fillStyle = owned ? COLORS.espresso : "#aba098";
-        ctx.font = "bold 16px system-ui, sans-serif";
+        ctx.font = "bold 16px Georgia, serif";
         ctx.fillText(entry.name, x + 54, y + 34);
         ctx.fillStyle = eq ? COLORS.moss : owned ? COLORS.wood_mid : "#7e726c";
         ctx.font = "bold 13px system-ui, sans-serif";
@@ -570,25 +641,25 @@ export class UIOverlay {
     } else {
       Object.entries(ITEMS_DATA.trinkets).forEach(([id, meta], idx) => {
         const col = idx % 2, row = Math.floor(idx / 2);
-        const x = mx + 34 + col * 462, y = my + 122 + row * 82, w = 446, h = 72;
+        const x = mx + 34 + col * 462, y = my + 122 + row * 64, w = 446, h = 56;
         const found = progress.hasTrinket(id), focused = idx === this.focusIdx;
         this.drawPanel(ctx, x, y, w, h, found ? "parchment" : "dark");
         if (focused) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2); }
-        if (found) this.drawBadgeIcon(ctx, x + 28, y + 36, id, 15);
+        if (found) this.drawBadgeIcon(ctx, x + 28, y + 28, id, 14);
         ctx.fillStyle = found ? COLORS.espresso : "#aba098";
-        ctx.font = "bold 17px system-ui, sans-serif";
-        ctx.fillText(found ? meta.name : "Undiscovered Trinket", x + 54, y + 32);
+        ctx.font = "bold 16px Georgia, serif";
+        ctx.fillText(found ? meta.name : "Undiscovered Trinket", x + 54, y + 34);
         ctx.fillStyle = found ? COLORS.moss : "#8a7e77";
         ctx.font = "13px system-ui, sans-serif";
-        ctx.fillText(found ? "FOUND" : "Click to view hint", x + 54, y + 52);
+        ctx.textAlign = "right"; ctx.fillText(found ? "FOUND" : "LOCKED", x + w - 16, y + 33); ctx.textAlign = "left";
         if (focused) footerText = found ? meta.description : (meta.hint || "Search the valley.");
         this.hitRegions.push({ x, y, w, h, onClick: () => { this.focusIdx = idx; cb.onPlaySfx("blip"); } });
       });
     }
 
-    this.drawPanel(ctx, mx + 34, my + mh - 94, mw - 68, 70, "wood");
+    this.drawPanel(ctx, mx + 34, my + mh - 94, mw - 68, 70, "wood", true);
     ctx.fillStyle = COLORS.cream;
-    ctx.font = "15px system-ui, sans-serif";
+    ctx.font = "15px Georgia, serif";
     this.wrapText(ctx, footerText, mx + 52, my + mh - 64, mw - 104, 21);
   }
 
@@ -597,33 +668,33 @@ export class UIOverlay {
     this.drawPanel(ctx, mx + mw - 270, my + 18, 134, 38, "wood");
     this.drawGemIcon(ctx, mx + mw - 246, my + 37, 10);
     ctx.fillStyle = COLORS.gold_bright;
-    ctx.font = "bold 20px system-ui, sans-serif";
+    ctx.font = "bold 20px Georgia, serif";
     ctx.fillText(`${progress.gems}`, mx + mw - 226, my + 44);
 
     const items = this.getShopItems();
     let desc = "";
     items.forEach((item, idx) => {
       const col = idx % 2, row = Math.floor(idx / 2);
-      const x = mx + 34 + col * 462, y = my + 82 + row * 86, w = 446, h = 74;
+      const x = mx + 34 + col * 462, y = my + 82 + row * 64, w = 446, h = 56;
       const owned = progress.isUnlocked(item.id), eq = progress.isEquipped(item.id), afford = progress.gems >= item.price;
       const focused = idx === this.focusIdx;
 
       this.drawPanel(ctx, x, y, w, h, owned || afford ? "parchment" : "dark");
       if (focused) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2); }
-      this.drawBadgeIcon(ctx, x + 30, y + 37, item.id, 15);
+      this.drawBadgeIcon(ctx, x + 28, y + 28, item.id, 14);
       ctx.fillStyle = owned || afford ? COLORS.espresso : "#9f948d";
-      ctx.font = "bold 17px system-ui, sans-serif";
-      ctx.fillText(item.name, x + 56, y + 32);
+      ctx.font = "bold 16px Georgia, serif";
+      ctx.fillText(item.name, x + 54, y + 34);
       ctx.fillStyle = eq ? COLORS.moss : owned ? COLORS.wood_mid : afford ? COLORS.wood_dark : "#7e726c";
-      ctx.font = "bold 14px system-ui, sans-serif";
-      ctx.fillText(eq ? "EQUIPPED (Toggle)" : owned ? "OWNED (Equip)" : `${item.price} Gems`, x + 56, y + 54);
+      ctx.font = "bold 13px system-ui, sans-serif";
+      ctx.textAlign = "right"; ctx.fillText(eq ? "EQUIPPED" : owned ? "OWNED" : `${item.price} Gems`, x + w - 16, y + 33); ctx.textAlign = "left";
       if (focused) desc = item.description;
       this.hitRegions.push({ x, y, w, h, onClick: () => { this.focusIdx = idx; this.buyOrToggleShopItem(idx, progress, cb.onPlaySfx); } });
     });
 
-    this.drawPanel(ctx, mx + 34, my + mh - 94, mw - 68, 70, "wood");
+    this.drawPanel(ctx, mx + 34, my + mh - 94, mw - 68, 70, "wood", true);
     ctx.fillStyle = COLORS.cream;
-    ctx.font = "15px system-ui, sans-serif";
+    ctx.font = "15px Georgia, serif";
     this.wrapText(ctx, desc, mx + 52, my + mh - 64, mw - 104, 21);
   }
 
@@ -631,9 +702,26 @@ export class UIOverlay {
     const { mx, my, mw, mh } = this.renderModalFrame(ctx, "World Map & Shrines", cb);
     this.drawPanel(ctx, mx + 34, my + 74, mw - 68, 326, "dark");
 
+    // Illustrated biome silhouettes
+    ctx.fillStyle = "rgba(106, 158, 92, 0.16)";
+    ctx.beginPath(); ctx.ellipse(mx + 130, my + 240, 90, 50, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(109, 191, 194, 0.14)";
+    ctx.beginPath(); ctx.arc(mx + 280, my + 160, 65, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(244, 192, 78, 0.15)";
+    ctx.beginPath(); ctx.ellipse(mx + 380, my + 110, 75, 32, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(132, 97, 156, 0.18)";
+    ctx.fillRect(mx + 440, my + 170, 95, 75);
+    ctx.fillStyle = "rgba(91, 180, 184, 0.16)";
+    ctx.beginPath(); ctx.ellipse(mx + 540, my + 240, 75, 42, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Compass rose
+    ctx.strokeStyle = "rgba(242, 229, 198, 0.35)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(mx + 68, my + 95); ctx.lineTo(mx + 68, my + 125); ctx.moveTo(mx + 53, my + 110); ctx.lineTo(mx + 83, my + 110); ctx.stroke();
+    ctx.fillStyle = "rgba(255, 228, 122, 0.65)"; ctx.font = "bold 11px Georgia, serif"; ctx.fillText("N", mx + 64, my + 91);
+
     ctx.strokeStyle = COLORS.wood_light;
     ctx.lineWidth = 4;
-    [[0, 1], [0, 2], [1, 2], [1, 3]].forEach(([a, b]) => {
+    [[0, 1], [0, 2], [1, 2], [1, 3], [2, 4]].forEach(([a, b]) => {
       ctx.beginPath(); ctx.moveTo(MAP_NODES[a].pos[0], MAP_NODES[a].pos[1]); ctx.lineTo(MAP_NODES[b].pos[0], MAP_NODES[b].pos[1]); ctx.stroke();
     });
 
@@ -641,55 +729,58 @@ export class UIOverlay {
       const [nx, ny] = node.pos;
       const unlocked = progress.unlocked_shrines.includes(node.shrine_id);
       const selected = idx === this.focusIdx, here = node.level_id === progress.current_level;
-      if (selected) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(nx, ny, 34, 0, Math.PI * 2); ctx.stroke(); }
+      if (selected) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(nx, ny, 30, 0, Math.PI * 2); ctx.stroke(); }
       ctx.fillStyle = unlocked ? node.color : "#5c5860";
-      ctx.beginPath(); ctx.arc(nx, ny, 26, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(nx, ny, 22, 0, Math.PI * 2); ctx.fill();
       if (here) {
-        ctx.fillStyle = COLORS.gold; ctx.fillRect(nx - 22, ny - 44, 44, 16);
-        ctx.fillStyle = COLORS.espresso; ctx.font = "bold 11px system-ui, sans-serif";
-        ctx.textAlign = "center"; ctx.fillText("HERE", nx, ny - 32);
+        ctx.fillStyle = COLORS.gold; ctx.fillRect(nx - 20, ny - 38, 40, 14);
+        ctx.fillStyle = COLORS.espresso; ctx.font = "bold 10px Georgia, serif";
+        ctx.textAlign = "center"; ctx.fillText("HERE", nx, ny - 28);
       }
-      ctx.fillStyle = COLORS.cream; ctx.font = "bold 15px system-ui, sans-serif";
-      ctx.textAlign = "center"; ctx.fillText(node.name, nx, ny + 44); ctx.textAlign = "left";
+      ctx.fillStyle = COLORS.cream; ctx.font = "bold 13px Georgia, serif";
+      ctx.textAlign = "center"; ctx.fillText(node.name, nx, ny + 38); ctx.textAlign = "left";
       this.hitRegions.push({
-        x: nx - 34, y: ny - 34, w: 68, h: 68,
+        x: nx - 30, y: ny - 30, w: 60, h: 60,
         onClick: () => { if (this.focusIdx === idx) this.warpToNode(idx, progress, cb); else { this.focusIdx = idx; cb.onPlaySfx("blip"); } }
       });
     });
 
     const sel = MAP_NODES[this.focusIdx] || MAP_NODES[0];
     const unlocked = progress.unlocked_shrines.includes(sel.shrine_id);
-    this.drawPanel(ctx, mx + 34, my + mh - 134, mw - 270, 102, "wood");
+    this.drawPanel(ctx, mx + 34, my + mh - 134, mw - 270, 102, "wood", true);
     ctx.fillStyle = unlocked ? COLORS.gold_bright : COLORS.parchment_dark;
-    ctx.font = "bold 18px system-ui, sans-serif";
+    ctx.font = "bold 18px Georgia, serif";
     ctx.fillText(`${sel.name} (${unlocked ? "Shrine Attuned" : "Unattuned"})`, mx + 52, my + mh - 98);
-    ctx.fillStyle = COLORS.cream; ctx.font = "14px system-ui, sans-serif";
+    ctx.fillStyle = COLORS.cream; ctx.font = "14px Georgia, serif";
     this.wrapText(ctx, sel.subtitle, mx + 52, my + mh - 70, mw - 305, 20);
 
     const wx = mx + mw - 216, wy = my + mh - 108;
     this.drawPanel(ctx, wx, wy, 182, 50, unlocked ? "wood" : "dark");
     ctx.fillStyle = unlocked ? COLORS.cream : "#998d86";
-    ctx.font = "bold 17px system-ui, sans-serif";
+    ctx.font = "bold 17px Georgia, serif";
     ctx.textAlign = "center"; ctx.fillText(unlocked ? "Fast Travel" : "Shrine Locked", wx + 91, wy + 31); ctx.textAlign = "left";
     this.hitRegions.push({ x: wx, y: wy, w: 182, h: 50, onClick: () => this.warpToNode(this.focusIdx, progress, cb) });
   }
 
   private renderJournal(ctx: CanvasRenderingContext2D, progress: GameProgress, cb: UICallbacks): void {
     const { mx, my } = this.renderModalFrame(ctx, "Explorer's Campaign Journal", cb);
-    this.campaign.evaluate(progress).forEach((ch, idx) => {
-      const col = idx % 2, row = Math.floor(idx / 2);
-      const x = mx + 34 + col * 462, y = my + 82 + row * 226, w = 446, h = 210;
+    const chapters = this.campaign.evaluate(progress);
+    chapters.forEach((ch, idx) => {
+      const x = idx === 4 ? mx + 268 : mx + 34 + (idx % 2) * 462;
+      const y = my + 76 + Math.floor(idx / 2) * 144;
+      const w = 446;
+      const h = 136;
       this.drawPanel(ctx, x, y, w, h, ch.completed ? "wood" : "dark");
       ctx.fillStyle = ch.completed ? COLORS.moss_light : COLORS.gold_bright;
-      ctx.font = "bold 18px system-ui, sans-serif";
-      ctx.fillText(`Chapter ${ch.number}: ${ch.title} ${ch.completed ? "✓" : ""}`, x + 18, y + 32);
+      ctx.font = "bold 16px Georgia, serif";
+      ctx.fillText(`Ch ${ch.number}: ${ch.title} ${ch.completed ? "✓" : ""}`, x + 16, y + 26);
       ctx.fillStyle = COLORS.parchment_dark;
-      ctx.font = "13px system-ui, sans-serif";
-      this.wrapText(ctx, ch.summary, x + 18, y + 56, w - 36, 18);
+      ctx.font = "12px Georgia, serif";
+      this.wrapText(ctx, ch.summary, x + 16, y + 44, w - 32, 16);
       ch.objectives.forEach((obj, oIdx) => {
         ctx.fillStyle = obj.done ? COLORS.moss_light : COLORS.cream;
-        ctx.font = "14px system-ui, sans-serif";
-        ctx.fillText(`${obj.done ? "☑" : "☐"} ${obj.label}`, x + 18, y + 114 + oIdx * 28);
+        ctx.font = "13px system-ui, sans-serif";
+        ctx.fillText(`${obj.done ? "☑" : "☐"} ${obj.label}`, x + 16, y + 78 + oIdx * 20);
       });
     });
   }
@@ -698,13 +789,14 @@ export class UIOverlay {
     const { mx, my, mw } = this.renderModalFrame(ctx, "Cozy Pause & Settings", cb);
     const drawSlider = (label: string, val: number, y: number, kind: "music" | "sfx", focused: boolean) => {
       ctx.fillStyle = focused ? COLORS.gold_bright : COLORS.espresso;
-      ctx.font = "bold 18px system-ui, sans-serif";
+      ctx.font = "bold 18px Georgia, serif";
       ctx.fillText(label, mx + 120, y + 20);
       const tx = mx + 320, tw = 420;
       ctx.fillStyle = COLORS.parchment_dark; ctx.beginPath(); ctx.roundRect(tx, y + 8, tw, 12, 6); ctx.fill();
       ctx.fillStyle = COLORS.moss; ctx.beginPath(); ctx.roundRect(tx, y + 8, tw * val, 12, 6); ctx.fill();
       ctx.fillStyle = COLORS.wood_mid; ctx.beginPath(); ctx.arc(tx + tw * val, y + 14, 11, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = COLORS.espresso; ctx.fillText(`${Math.round(val * 100)}%`, tx + tw + 22, y + 20);
+      ctx.fillStyle = COLORS.espresso; ctx.font = "bold 14px system-ui, sans-serif";
+      ctx.fillText(`${Math.round(val * 100)}%`, tx + tw + 22, y + 20);
       this.sliderBoxes[kind] = { x: tx, y, w: tw, h: 30 };
     };
 
@@ -720,7 +812,7 @@ export class UIOverlay {
       const bx = mx + mw / 2 - 210, bw = 420, bh = 48;
       this.drawPanel(ctx, bx, b.y, bw, bh, i === 2 ? "dark" : "wood");
       if (this.focusIdx === i + 2) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.strokeRect(bx - 1, b.y - 1, bw + 2, bh + 2); }
-      ctx.fillStyle = COLORS.cream; ctx.font = "bold 17px system-ui, sans-serif";
+      ctx.fillStyle = COLORS.cream; ctx.font = "bold 17px Georgia, serif";
       ctx.textAlign = "center"; ctx.fillText(b.label, mx + mw / 2, b.y + 30); ctx.textAlign = "left";
       this.hitRegions.push({ x: bx, y: b.y, w: bw, h: bh, onClick: b.fn });
     });
