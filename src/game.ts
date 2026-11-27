@@ -75,7 +75,9 @@ export class Game {
       this.audio.startMusic();
       this.keys[e.key] = true;
       if (e.repeat || this.irisPhase !== "idle") return;
-      if (e.key === "Tab") e.preventDefault();
+      if (["Tab", " ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+      }
       if (this.ui.handleKeyDown(e.key, this.progress, this.uiCallbacks)) return;
 
       if (e.key === "Tab" || e.key === "i" || e.key === "I") this.ui.toggleModal("inventory", this.progress, (n) => this.audio.play(n));
@@ -292,6 +294,9 @@ export class Game {
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  new Game("gameCanvas");
-});
+const boot = () => new Game("gameCanvas");
+if (document.readyState === "loading") {
+  window.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}

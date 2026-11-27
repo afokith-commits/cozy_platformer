@@ -1,0 +1,12 @@
+{
+  "name": "sproutbound",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && esbuild src/game.ts --bundle --outfile=docs/game.js --minify"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}

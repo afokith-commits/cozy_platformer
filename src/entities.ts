@@ -91,14 +91,14 @@ export class BouncePad {
     const press = Math.round(this.squash * 3);
 
     ctx.fillStyle = COLORS.cream;
-    ctx.fillRect(sx + 5, sy + 6 + press, 6, 6 - press);
+    ctx.fillRect(sx + 6, sy + 8 + press, 4, 8 - press);
     ctx.fillStyle = COLORS.coral;
     ctx.beginPath();
-    ctx.ellipse(sx + 8, sy + 5 + press, 8, 3.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(sx + 8, sy + 7 + press, 8, 3.5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = COLORS.cream;
-    ctx.fillRect(sx + 3, sy + 3 + press, 2, 2);
-    ctx.fillRect(sx + 10, sy + 3 + press, 2, 2);
+    ctx.fillRect(sx + 3, sy + 5 + press, 2, 2);
+    ctx.fillRect(sx + 10, sy + 5 + press, 2, 2);
   }
 }
 

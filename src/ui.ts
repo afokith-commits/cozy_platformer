@@ -193,7 +193,7 @@ export class UIOverlay {
       if (isLeft || isRight) { this.invTab = this.invTab === "badges" ? "trinkets" : "badges"; this.focusIdx = 0; cb.onPlaySfx("blip"); }
       const len = this.invTab === "badges" ? this.getBadgeEntries().length : Object.keys(ITEMS_DATA.trinkets).length;
       if (isUp) { this.focusIdx = (this.focusIdx - 1 + len) % len; cb.onPlaySfx("blip"); }
-      if (isDown) { this.focusIdx = (this.focusIdx + 1) % len; cb.onPlaySfx("blip"); }
+      if (isDown) { this.focusIdx = (this.focusIdx + 1 + len) % len; cb.onPlaySfx("blip"); }
       if (isConfirm && this.invTab === "badges") {
         const e = this.getBadgeEntries()[this.focusIdx];
         if (e && progress.isUnlocked(e.id)) {

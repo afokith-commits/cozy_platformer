@@ -53,32 +53,32 @@ export class GameProgress {
   public save(): void {
     try {
       localStorage.setItem("sproutbound_save", JSON.stringify(this));
-    } catch { /* Storage fallback */ }
+    } catch { /* noop */ }
   }
 
   public load(): void {
     try {
       const raw = localStorage.getItem("sproutbound_save");
       if (!raw) return;
-      const data = JSON.parse(raw);
-      if (typeof data.gems === "number") this.gems = data.gems;
-      if (Array.isArray(data.collected_gems)) this.collected_gems = data.collected_gems;
-      if (Array.isArray(data.trinkets)) this.trinkets = data.trinkets;
-      if (Array.isArray(data.unlocked_badges)) this.unlocked_badges = data.unlocked_badges;
-      if (Array.isArray(data.equipped_badges)) this.equipped_badges = data.equipped_badges;
-      if (Array.isArray(data.unlocked_shrines) && data.unlocked_shrines.length > 0) {
-        this.unlocked_shrines = data.unlocked_shrines;
+      const d = JSON.parse(raw);
+      if (typeof d.gems === "number") this.gems = d.gems;
+      if (Array.isArray(d.collected_gems)) this.collected_gems = d.collected_gems;
+      if (Array.isArray(d.trinkets)) this.trinkets = d.trinkets;
+      if (Array.isArray(d.unlocked_badges)) this.unlocked_badges = d.unlocked_badges;
+      if (Array.isArray(d.equipped_badges)) this.equipped_badges = d.equipped_badges;
+      if (Array.isArray(d.unlocked_shrines) && d.unlocked_shrines.length > 0) {
+        this.unlocked_shrines = d.unlocked_shrines;
       }
-      if (data.flags && typeof data.flags === "object") this.flags = data.flags;
-      if (typeof data.current_level === "string") this.current_level = data.current_level;
-      if (typeof data.spawn_id === "string") this.spawn_id = data.spawn_id;
-      if (typeof data.sfx_volume === "number") this.sfx_volume = data.sfx_volume;
-      if (typeof data.music_volume === "number") this.music_volume = data.music_volume;
-    } catch { /* Storage fallback */ }
+      if (d.flags && typeof d.flags === "object") this.flags = d.flags;
+      if (typeof d.current_level === "string") this.current_level = d.current_level;
+      if (typeof d.spawn_id === "string") this.spawn_id = d.spawn_id;
+      if (typeof d.sfx_volume === "number") this.sfx_volume = d.sfx_volume;
+      if (typeof d.music_volume === "number") this.music_volume = d.music_volume;
+    } catch { /* noop */ }
   }
 
   public reset(): void {
-    try { localStorage.removeItem("sproutbound_save"); } catch { /* Storage fallback */ }
+    try { localStorage.removeItem("sproutbound_save"); } catch { /* noop */ }
     this.gems = 0;
     this.collected_gems = [];
     this.trinkets = [];

@@ -132,10 +132,7 @@ export class AudioManager {
         [130.81, 174.61, 261.63, 392.00]  // Csus4
       ];
       const bells = [523.25, 659.25, 587.33, 783.99];
-      const chord = chords[this.chordIdx % chords.length];
-      chord.forEach((freq) => {
-        this.playTone(freq, freq * 1.001, 2.9, "sine", 0.055, true);
-      });
+      chords[this.chordIdx % chords.length].forEach((f) => this.playTone(f, f * 1.001, 2.9, "sine", 0.055, true));
       const bell = bells[this.chordIdx % bells.length];
       setTimeout(() => this.playTone(bell, bell, 0.9, "sine", 0.04, true), 900);
       this.chordIdx = (this.chordIdx + 1) % chords.length;
