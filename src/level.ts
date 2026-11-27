@@ -367,11 +367,18 @@ export class Level {
         octx.fillStyle = COLORS.gold_bright; octx.fillRect(dx + 4, dy - 7, 3, 2);
         octx.fillStyle = COLORS.coral; octx.fillRect(dx + 9, dy - 8, 3, 3);
       } else if (d.kind === "lantern") {
-        octx.fillStyle = COLORS.espresso; octx.fillRect(dx + 6, dy - 20, 3, 20);
-        octx.fillStyle = COLORS.wood_mid; octx.fillRect(dx + 7, dy - 20, 2, 20);
-        octx.fillRect(dx + 7, dy - 20, 6, 2);
-        octx.fillStyle = COLORS.wood_dark; octx.fillRect(dx + 10, dy - 18, 4, 5);
-        octx.fillStyle = COLORS.gold_bright; octx.fillRect(dx + 11, dy - 17, 2, 3);
+        octx.fillStyle = COLORS.espresso;
+        octx.fillRect(dx + 6, dy - 16, 4, 16);
+        octx.fillRect(dx + 4, dy - 22, 8, 7);
+        octx.fillStyle = COLORS.wood_mid;
+        octx.fillRect(dx + 7, dy - 16, 2, 16);
+        octx.fillStyle = COLORS.wood_dark;
+        octx.fillRect(dx + 4, dy - 22, 8, 2);
+        octx.fillRect(dx + 5, dy - 16, 6, 1);
+        octx.fillStyle = COLORS.gold_bright;
+        octx.fillRect(dx + 5, dy - 20, 6, 4);
+        octx.fillStyle = COLORS.white;
+        octx.fillRect(dx + 7, dy - 19, 2, 2);
       }
     });
 
@@ -509,10 +516,11 @@ export class Level {
       const ux = Math.round(u.x - this.camX), uy = Math.round(u.y - this.camY);
       ctx.fillStyle = "rgba(182, 244, 240, 0.12)";
       ctx.fillRect(ux + 2, uy, u.w - 4, u.h);
-      const streakY = uy + ((16 - Math.floor((timeSec * 28 + u.x) % 16)) % 16);
+      const off1 = 15 - (Math.floor(timeSec * 28 + u.x) % 16);
+      const off2 = (off1 + 8) % 16;
       ctx.fillStyle = "rgba(255, 250, 224, 0.5)";
-      ctx.fillRect(ux + 4 + Math.round(Math.sin(timeSec * 6 + u.y) * 2), streakY, 1, 5);
-      ctx.fillRect(ux + 11 - Math.round(Math.sin(timeSec * 5 + u.y) * 2), (streakY + 8) % 16 + uy - (streakY % 16 < 8 ? 0 : 16), 1, 4);
+      ctx.fillRect(ux + 4 + Math.round(Math.sin(timeSec * 6 + u.y) * 2), uy + off1, 1, 4);
+      ctx.fillRect(ux + 11 - Math.round(Math.sin(timeSec * 5 + u.y) * 2), uy + off2, 1, 4);
     });
 
     // 6. Cached Static Terrain & Decor
@@ -548,15 +556,11 @@ export class Level {
     // 9. Water Caustics
     this.hazardRects.forEach((h) => {
       const hx = Math.round(h.x - this.camX), hy = Math.round(h.y - this.camY);
-      const wave = Math.round(Math.sin(timeSec * 3.2 + h.x * 0.12) * 1.4);
+      const wave = Math.round(Math.sin(timeSec * 3.2 + h.x * 0.12));
       ctx.fillStyle = this.theme.water;
-      ctx.fillRect(hx, hy + 1, h.w, h.h - 1);
+      ctx.fillRect(hx, hy, h.w, h.h);
       ctx.fillStyle = this.theme.waterCrest;
       ctx.fillRect(hx, hy + Math.max(0, wave), h.w, 2);
-      if (Math.sin(timeSec * 4 + h.x) > 0.5) {
-        ctx.fillStyle = "rgba(255,255,255,0.45)";
-        ctx.fillRect(hx + 5, hy + 5, 5, 1);
-      }
     });
 
     // 10. Additive Lighting Glow Pass
@@ -566,7 +570,7 @@ export class Level {
       ctx.drawImage(sprite, Math.round(wx - this.camX - r), Math.round(wy - this.camY - r), r * 2, r * 2);
     };
     this.decor.forEach((d) => {
-      if (d.kind === "lantern") drawGlow(GLOW_GOLD, d.col * TILE_SIZE + 12, d.row * TILE_SIZE, 22 + Math.sin(timeSec * 4 + d.col) * 2);
+      if (d.kind === "lantern") drawGlow(GLOW_GOLD, d.col * TILE_SIZE + 8, d.row * TILE_SIZE - 2, 22 + Math.sin(timeSec * 4 + d.col) * 2);
     });
     this.shrines.forEach((s) => {
       if (s.attuned) drawGlow(GLOW_GOLD, s.x, s.y - 12, 28 + Math.sin(timeSec * 3.5) * 3);

@@ -495,8 +495,9 @@ export class Player {
     const y = bottomY - h;
 
     if (this.onGround) {
-      ctx.fillStyle = "rgba(24,18,22,0.45)";
-      ctx.fillRect(cx - 5, bottomY - 1, 10, 2);
+      ctx.fillStyle = "rgba(24, 18, 22, 0.28)";
+      ctx.fillRect(cx - 4, bottomY, 8, 1);
+      ctx.fillRect(cx - 3, bottomY + 1, 6, 1);
     }
 
     if (this.isGliding) {
@@ -512,17 +513,21 @@ export class Player {
     ctx.fillStyle = COLORS.coral;
     ctx.fillRect(cx - this.facing * 3, y + Math.floor(h / 2), 4, 2);
 
-    ctx.fillStyle = COLORS.espresso;
-    ctx.fillRect(x - 1, y, w + 2, h);
-
-    ctx.fillStyle = COLORS.sage; ctx.fillRect(x + 1, y + 5, w - 2, h - 5);
-    ctx.fillStyle = "#5c8874"; ctx.fillRect(x + 1, y + h - 3, w - 2, 2);
+    // Boots (drawn cleanly under cloak hem)
     const footOff = this.onGround && Math.abs(this.vx) > 12 ? Math.round(Math.sin(this.walkCycle)) : 0;
     ctx.fillStyle = COLORS.espresso;
     ctx.fillRect(cx - 3, bottomY - 2 + Math.max(0, footOff), 2, 2);
     ctx.fillRect(cx + 1, bottomY - 2 + Math.max(0, -footOff), 2, 2);
 
-    ctx.fillStyle = COLORS.moss; ctx.fillRect(x, y + 1, w, Math.max(7, Math.floor(h / 2 + 1)));
+    // Outlined Cloak (stops 2px above bottomY so boots stay distinct)
+    ctx.fillStyle = COLORS.espresso; ctx.fillRect(x, y + 5, w, Math.max(4, h - 7));
+    ctx.fillStyle = COLORS.sage; ctx.fillRect(x + 1, y + 5, w - 2, Math.max(3, h - 8));
+    ctx.fillStyle = "#5c8874"; ctx.fillRect(x + 1, bottomY - 4, w - 2, 1);
+
+    // Outlined Hood & sunlit highlight
+    const headH = Math.max(7, Math.floor(h / 2 + 1));
+    ctx.fillStyle = COLORS.espresso; ctx.fillRect(x - 1, y, w + 2, headH + 2);
+    ctx.fillStyle = COLORS.moss; ctx.fillRect(x, y + 1, w, headH);
     ctx.fillStyle = COLORS.moss_light; ctx.fillRect(x + 1, y + 1, w - 2, 2);
 
     const lean = Math.sign(this.vx) * -1;

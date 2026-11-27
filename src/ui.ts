@@ -334,9 +334,17 @@ export class UIOverlay {
     }
   }
 
-  private drawPanel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, style: "parchment" | "wood" | "dark" = "parchment", rivets = false): void {
-    ctx.fillStyle = "rgba(20,14,18,0.42)";
-    ctx.beginPath(); ctx.roundRect(x + 4, y + 6, w, h, 12); ctx.fill();
+  private drawPanel(
+    ctx: CanvasRenderingContext2D,
+    x: number, y: number, w: number, h: number,
+    style: "parchment" | "wood" | "dark" = "parchment",
+    rivets = false,
+    shadow = true
+  ): void {
+    if (shadow) {
+      ctx.fillStyle = "rgba(20, 14, 18, 0.34)";
+      ctx.beginPath(); ctx.roundRect(x + 3, y + 4, w, h, 12); ctx.fill();
+    }
     ctx.fillStyle = style === "parchment" ? COLORS.parchment : style === "wood" ? COLORS.wood_mid : "#32262b";
     ctx.strokeStyle = style === "parchment" ? COLORS.wood_dark : COLORS.espresso;
     ctx.lineWidth = 3;
@@ -350,6 +358,14 @@ export class UIOverlay {
         ctx.beginPath(); ctx.arc(rx, ry, 3, 0, Math.PI * 2); ctx.fill();
       });
     }
+  }
+
+  private drawFocusRing(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    ctx.strokeStyle = COLORS.gold_bright;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(x - 1, y - 1, w + 2, h + 2, 13);
+    ctx.stroke();
   }
 
   private drawGemIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
@@ -414,7 +430,7 @@ export class UIOverlay {
 
     // Top-left Parchment HUD Card
     const totalTrinkets = Object.keys(ITEMS_DATA.trinkets).length;
-    this.drawPanel(ctx, 18, 16, 370, 78, "parchment", true);
+    this.drawPanel(ctx, 18, 16, 370, 78, "parchment", true, true);
     this.drawGemIcon(ctx, 48, 43, Math.round(12 * this.gemScale));
     ctx.fillStyle = COLORS.espresso;
     ctx.font = "bold 24px Georgia, serif";
@@ -429,7 +445,7 @@ export class UIOverlay {
     // Active Trial HUD Banner
     if (activeTrial) {
       const tw = 280, tx = (CANVAS_W - tw) / 2, ty = 16;
-      this.drawPanel(ctx, tx, ty, tw, 56, "wood", true);
+      this.drawPanel(ctx, tx, ty, tw, 56, "wood", true, true);
       ctx.fillStyle = COLORS.gold_bright;
       ctx.font = "bold 15px Georgia, serif";
       ctx.textAlign = "center";
@@ -448,7 +464,7 @@ export class UIOverlay {
       { label: "[Esc] Menu", modal: "pause", x: CANVAS_W - 116, w: 98 }
     ];
     pills.forEach((p) => {
-      this.drawPanel(ctx, p.x, 16, p.w, 38, this.activeModal === p.modal ? "parchment" : "wood");
+      this.drawPanel(ctx, p.x, 16, p.w, 38, this.activeModal === p.modal ? "parchment" : "wood", false, true);
       ctx.fillStyle = this.activeModal === p.modal ? COLORS.espresso : COLORS.cream;
       ctx.font = "bold 14px Georgia, serif";
       ctx.textAlign = "center"; ctx.fillText(p.label, p.x + p.w / 2, 40); ctx.textAlign = "left";
@@ -476,7 +492,7 @@ export class UIOverlay {
       const py = Math.max(54, Math.min(CANVAS_H - 60, (promptObj.y - 26 - level.camY) * UI_SCALE + Math.sin(timeSec * 4) * 4));
       ctx.font = "bold 16px Georgia, serif";
       const w = Math.max(130, ctx.measureText(promptObj.prompt_label).width + 66);
-      this.drawPanel(ctx, px - w / 2, py - 20, w, 40, "parchment", true);
+      this.drawPanel(ctx, px - w / 2, py - 20, w, 40, "parchment", true, true);
       ctx.fillStyle = COLORS.wood_dark;
       ctx.beginPath(); ctx.roundRect(px - w / 2 + 10, py - 12, 24, 24, 5); ctx.fill();
       ctx.fillStyle = COLORS.gold_bright;
@@ -496,7 +512,7 @@ export class UIOverlay {
       ctx.globalAlpha = Math.min(1, this.toastTimer * 2.5);
       ctx.font = "bold 18px Georgia, serif";
       const tw = Math.max(240, ctx.measureText(this.toastText).width + 48);
-      this.drawPanel(ctx, CANVAS_W / 2 - tw / 2, 16, tw, 44, "parchment", true);
+      this.drawPanel(ctx, CANVAS_W / 2 - tw / 2, 16, tw, 44, "parchment", true, true);
       ctx.fillStyle = COLORS.espresso;
       ctx.textAlign = "center"; ctx.fillText(this.toastText, CANVAS_W / 2, 44); ctx.textAlign = "left";
       ctx.globalAlpha = 1;
@@ -507,13 +523,13 @@ export class UIOverlay {
     ctx.fillStyle = "rgba(24, 18, 22, 0.72)";
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     const mw = 980, mh = 560, mx = (CANVAS_W - mw) / 2, my = (CANVAS_H - mh) / 2;
-    this.drawPanel(ctx, mx, my, mw, mh, "parchment", true);
+    this.drawPanel(ctx, mx, my, mw, mh, "parchment", true, true);
     ctx.fillStyle = COLORS.espresso;
     ctx.font = "bold 26px Georgia, serif";
     ctx.fillText(title, mx + 34, my + 48);
 
     const cx = mx + mw - 122, cy = my + 20;
-    this.drawPanel(ctx, cx, cy, 94, 34, "wood");
+    this.drawPanel(ctx, cx, cy, 94, 34, "wood", false, false);
     ctx.fillStyle = COLORS.cream;
     ctx.font = "bold 14px Georgia, serif";
     ctx.textAlign = "center"; ctx.fillText("Close [Esc]", cx + 47, cy + 22); ctx.textAlign = "left";
@@ -522,7 +538,7 @@ export class UIOverlay {
   }
 
   private drawPortrait(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-    this.drawPanel(ctx, x, y, 120, 120, "wood", true);
+    this.drawPanel(ctx, x, y, 120, 120, "wood", true, false);
     const cx = x + 60, cy = y + 60;
     if (this.currentStyle === "frog") {
       ctx.fillStyle = "#62a85c"; ctx.beginPath(); ctx.arc(cx, cy + 6, 30, 0, Math.PI * 2); ctx.fill();
@@ -561,8 +577,8 @@ export class UIOverlay {
     ctx.fillStyle = "rgba(24, 18, 22, 0.45)";
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     const boxW = 920, boxH = 240, boxX = (CANVAS_W - boxW) / 2, boxY = CANVAS_H - boxH - 28;
-    this.drawPanel(ctx, boxX, boxY, boxW, boxH, "parchment", true);
-    this.drawPanel(ctx, boxX + 24, boxY - 22, 240, 38, "wood");
+    this.drawPanel(ctx, boxX, boxY, boxW, boxH, "parchment", true, true);
+    this.drawPanel(ctx, boxX + 24, boxY - 22, 240, 38, "wood", false, false);
     ctx.fillStyle = COLORS.gold_bright;
     ctx.font = "bold 18px Georgia, serif";
     ctx.fillText(this.currentSpeaker, boxX + 40, boxY + 2);
@@ -585,8 +601,8 @@ export class UIOverlay {
       const bx = boxX + boxW - 24 - (this.currentChoices.length - idx) * (bw + 10) + 10;
       const by = boxY + boxH - 56;
       const sel = idx === this.selectedChoiceIdx;
-      this.drawPanel(ctx, bx, by, bw, bh, "wood");
-      if (sel) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.strokeRect(bx - 1, by - 1, bw + 2, bh + 2); }
+      this.drawPanel(ctx, bx, by, bw, bh, "wood", false, false);
+      if (sel) { this.drawFocusRing(ctx, bx, by, bw, bh); }
       ctx.fillStyle = sel ? COLORS.gold_bright : COLORS.cream;
       ctx.font = "bold 15px Georgia, serif";
       ctx.textAlign = "center"; ctx.fillText(ch.label, bx + bw / 2, by + 25); ctx.textAlign = "left";
@@ -602,7 +618,7 @@ export class UIOverlay {
       { id: "trinkets", label: `Trinkets (${progress.trinkets.length}/${Object.keys(ITEMS_DATA.trinkets).length})`, x: mx + 374 }
     ];
     tabs.forEach((t) => {
-      this.drawPanel(ctx, t.x, my + 70, 156, 38, this.invTab === t.id ? "wood" : "parchment");
+      this.drawPanel(ctx, t.x, my + 70, 156, 38, this.invTab === t.id ? "wood" : "parchment", false, false);
       ctx.fillStyle = this.invTab === t.id ? COLORS.gold_bright : COLORS.espresso;
       ctx.font = "bold 15px Georgia, serif";
       ctx.textAlign = "center"; ctx.fillText(t.label, t.x + 78, my + 94); ctx.textAlign = "left";
@@ -616,8 +632,8 @@ export class UIOverlay {
         const col = idx % 2, row = Math.floor(idx / 2);
         const x = mx + 34 + col * 462, y = my + 122 + row * 64, w = 446, h = 56;
         const owned = progress.isUnlocked(entry.id), eq = progress.isEquipped(entry.id), focused = idx === this.focusIdx;
-        this.drawPanel(ctx, x, y, w, h, owned ? "parchment" : "dark");
-        if (focused) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2); }
+        this.drawPanel(ctx, x, y, w, h, owned ? "parchment" : "dark", false, false);
+        if (focused) { this.drawFocusRing(ctx, x, y, w, h); }
         if (owned) this.drawBadgeIcon(ctx, x + 28, y + 28, entry.id, 14);
         ctx.fillStyle = owned ? COLORS.espresso : "#aba098";
         ctx.font = "bold 16px Georgia, serif";
@@ -643,8 +659,8 @@ export class UIOverlay {
         const col = idx % 2, row = Math.floor(idx / 2);
         const x = mx + 34 + col * 462, y = my + 122 + row * 64, w = 446, h = 56;
         const found = progress.hasTrinket(id), focused = idx === this.focusIdx;
-        this.drawPanel(ctx, x, y, w, h, found ? "parchment" : "dark");
-        if (focused) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2); }
+        this.drawPanel(ctx, x, y, w, h, found ? "parchment" : "dark", false, false);
+        if (focused) { this.drawFocusRing(ctx, x, y, w, h); }
         if (found) this.drawBadgeIcon(ctx, x + 28, y + 28, id, 14);
         ctx.fillStyle = found ? COLORS.espresso : "#aba098";
         ctx.font = "bold 16px Georgia, serif";
@@ -657,7 +673,7 @@ export class UIOverlay {
       });
     }
 
-    this.drawPanel(ctx, mx + 34, my + mh - 94, mw - 68, 70, "wood", true);
+    this.drawPanel(ctx, mx + 34, my + mh - 94, mw - 68, 70, "wood", true, false);
     ctx.fillStyle = COLORS.cream;
     ctx.font = "15px Georgia, serif";
     this.wrapText(ctx, footerText, mx + 52, my + mh - 64, mw - 104, 21);
@@ -665,7 +681,7 @@ export class UIOverlay {
 
   private renderShop(ctx: CanvasRenderingContext2D, progress: GameProgress, cb: UICallbacks): void {
     const { mx, my, mw, mh } = this.renderModalFrame(ctx, "Pip's Cozy Curiosity Shop", cb);
-    this.drawPanel(ctx, mx + mw - 270, my + 18, 134, 38, "wood");
+    this.drawPanel(ctx, mx + mw - 270, my + 18, 134, 38, "wood", false, false);
     this.drawGemIcon(ctx, mx + mw - 246, my + 37, 10);
     ctx.fillStyle = COLORS.gold_bright;
     ctx.font = "bold 20px Georgia, serif";
@@ -679,8 +695,8 @@ export class UIOverlay {
       const owned = progress.isUnlocked(item.id), eq = progress.isEquipped(item.id), afford = progress.gems >= item.price;
       const focused = idx === this.focusIdx;
 
-      this.drawPanel(ctx, x, y, w, h, owned || afford ? "parchment" : "dark");
-      if (focused) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.strokeRect(x - 1, y - 1, w + 2, h + 2); }
+      this.drawPanel(ctx, x, y, w, h, owned || afford ? "parchment" : "dark", false, false);
+      if (focused) { this.drawFocusRing(ctx, x, y, w, h); }
       this.drawBadgeIcon(ctx, x + 28, y + 28, item.id, 14);
       ctx.fillStyle = owned || afford ? COLORS.espresso : "#9f948d";
       ctx.font = "bold 16px Georgia, serif";
@@ -692,7 +708,7 @@ export class UIOverlay {
       this.hitRegions.push({ x, y, w, h, onClick: () => { this.focusIdx = idx; this.buyOrToggleShopItem(idx, progress, cb.onPlaySfx); } });
     });
 
-    this.drawPanel(ctx, mx + 34, my + mh - 94, mw - 68, 70, "wood", true);
+    this.drawPanel(ctx, mx + 34, my + mh - 94, mw - 68, 70, "wood", true, false);
     ctx.fillStyle = COLORS.cream;
     ctx.font = "15px Georgia, serif";
     this.wrapText(ctx, desc, mx + 52, my + mh - 64, mw - 104, 21);
@@ -700,9 +716,8 @@ export class UIOverlay {
 
   private renderMap(ctx: CanvasRenderingContext2D, progress: GameProgress, cb: UICallbacks): void {
     const { mx, my, mw, mh } = this.renderModalFrame(ctx, "World Map & Shrines", cb);
-    this.drawPanel(ctx, mx + 34, my + 74, mw - 68, 326, "dark");
+    this.drawPanel(ctx, mx + 34, my + 74, mw - 68, 326, "dark", false, false);
 
-    // Illustrated biome silhouettes
     ctx.fillStyle = "rgba(106, 158, 92, 0.16)";
     ctx.beginPath(); ctx.ellipse(mx + 130, my + 240, 90, 50, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "rgba(109, 191, 194, 0.14)";
@@ -714,7 +729,6 @@ export class UIOverlay {
     ctx.fillStyle = "rgba(91, 180, 184, 0.16)";
     ctx.beginPath(); ctx.ellipse(mx + 540, my + 240, 75, 42, 0, 0, Math.PI * 2); ctx.fill();
 
-    // Compass rose
     ctx.strokeStyle = "rgba(242, 229, 198, 0.35)"; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(mx + 68, my + 95); ctx.lineTo(mx + 68, my + 125); ctx.moveTo(mx + 53, my + 110); ctx.lineTo(mx + 83, my + 110); ctx.stroke();
     ctx.fillStyle = "rgba(255, 228, 122, 0.65)"; ctx.font = "bold 11px Georgia, serif"; ctx.fillText("N", mx + 64, my + 91);
@@ -747,7 +761,7 @@ export class UIOverlay {
 
     const sel = MAP_NODES[this.focusIdx] || MAP_NODES[0];
     const unlocked = progress.unlocked_shrines.includes(sel.shrine_id);
-    this.drawPanel(ctx, mx + 34, my + mh - 134, mw - 270, 102, "wood", true);
+    this.drawPanel(ctx, mx + 34, my + mh - 134, mw - 270, 102, "wood", true, false);
     ctx.fillStyle = unlocked ? COLORS.gold_bright : COLORS.parchment_dark;
     ctx.font = "bold 18px Georgia, serif";
     ctx.fillText(`${sel.name} (${unlocked ? "Shrine Attuned" : "Unattuned"})`, mx + 52, my + mh - 98);
@@ -755,7 +769,7 @@ export class UIOverlay {
     this.wrapText(ctx, sel.subtitle, mx + 52, my + mh - 70, mw - 305, 20);
 
     const wx = mx + mw - 216, wy = my + mh - 108;
-    this.drawPanel(ctx, wx, wy, 182, 50, unlocked ? "wood" : "dark");
+    this.drawPanel(ctx, wx, wy, 182, 50, unlocked ? "wood" : "dark", false, false);
     ctx.fillStyle = unlocked ? COLORS.cream : "#998d86";
     ctx.font = "bold 17px Georgia, serif";
     ctx.textAlign = "center"; ctx.fillText(unlocked ? "Fast Travel" : "Shrine Locked", wx + 91, wy + 31); ctx.textAlign = "left";
@@ -770,7 +784,7 @@ export class UIOverlay {
       const y = my + 76 + Math.floor(idx / 2) * 144;
       const w = 446;
       const h = 136;
-      this.drawPanel(ctx, x, y, w, h, ch.completed ? "wood" : "dark");
+      this.drawPanel(ctx, x, y, w, h, ch.completed ? "wood" : "dark", false, false);
       ctx.fillStyle = ch.completed ? COLORS.moss_light : COLORS.gold_bright;
       ctx.font = "bold 16px Georgia, serif";
       ctx.fillText(`Ch ${ch.number}: ${ch.title} ${ch.completed ? "✓" : ""}`, x + 16, y + 26);
@@ -810,8 +824,8 @@ export class UIOverlay {
     ];
     btns.forEach((b, i) => {
       const bx = mx + mw / 2 - 210, bw = 420, bh = 48;
-      this.drawPanel(ctx, bx, b.y, bw, bh, i === 2 ? "dark" : "wood");
-      if (this.focusIdx === i + 2) { ctx.strokeStyle = COLORS.gold_bright; ctx.lineWidth = 3; ctx.strokeRect(bx - 1, b.y - 1, bw + 2, bh + 2); }
+      this.drawPanel(ctx, bx, b.y, bw, bh, i === 2 ? "dark" : "wood", false, false);
+      if (this.focusIdx === i + 2) { this.drawFocusRing(ctx, bx, b.y, bw, bh); }
       ctx.fillStyle = COLORS.cream; ctx.font = "bold 17px Georgia, serif";
       ctx.textAlign = "center"; ctx.fillText(b.label, mx + mw / 2, b.y + 30); ctx.textAlign = "left";
       this.hitRegions.push({ x: bx, y: b.y, w: bw, h: bh, onClick: b.fn });

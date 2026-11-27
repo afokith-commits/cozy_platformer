@@ -144,7 +144,7 @@ export const DIALOGUES_DATA: Record<string, DialogueTree> = {
     start: "greeting",
     entry_rules: [
       {
-        condition: { shrine_count_gte: 4, trial_count_gte: 5, not_flag: "festival_complete" },
+        condition: { shrine_count_gte: 5, trial_count_gte: 5, not_flag: "festival_complete" },
         node: "festival_finale"
       },
       {
@@ -423,7 +423,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
     spawns: {
       start: [4, 14],
       shrine: [7, 14],
-      from_canopy: [41, 9],
+      from_canopy: [39, 9],
       from_ruins: [39, 14]
     },
     shrines: [{ shrine_id: "shrine_meadow", name: "Meadow Hearth Shrine", col: 6, row: 14 }],
@@ -435,7 +435,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       { col: 17, row: 14, text: "Welcome to Meadow Hub! Jump with [Space], talk or enter doors with [E], open Backpack with [Tab], and open Shrine Map with [M]." }
     ],
     portals: [
-      { target_level: "canopy_cliffs", target_spawn: "from_meadow", label: "To Canopy Cliffs", col: 41, row: 9 },
+      { target_level: "canopy_cliffs", target_spawn: "from_meadow", label: "To Canopy Cliffs", col: 40, row: 9 },
       { target_level: "sunken_ruins", target_spawn: "from_meadow", label: "To Sunken Ruins", col: 42, row: 14 }
     ],
     trinkets: [{ trinket_id: "dewdrop_bell", col: 14, row: 5 }],
@@ -452,10 +452,10 @@ export const LEVELS_DATA: Record<string, LevelData> = {
     decor: [
       { kind: "tree", col: 2, row: 14 },
       { kind: "flower", col: 9, row: 14 },
-      { kind: "lantern", col: 13, row: 14 },
+      { kind: "lantern", col: 14, row: 14 },
       { kind: "tree", col: 22, row: 14 },
       { kind: "flower", col: 35, row: 14 },
-      { kind: "lantern", col: 40, row: 9 }
+      { kind: "lantern", col: 37, row: 9 }
     ]
   },
   canopy_cliffs: {
@@ -475,7 +475,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       "#                     ===                    #",
       "#                  #######                   #",
       "#                     ^                G  G  #",
-      "#    ^       G   ===       G          ###### #",
+      "#    ^       G   ===       ^          ###### #",
       "#   ===     ===           ===                #",
       "#     G                             ^        #",
       "#   #####          ===             ===       #",
@@ -488,7 +488,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       start: [3, 15],
       from_meadow: [3, 15],
       shrine: [20, 8],
-      from_ruins: [42, 10],
+      from_ruins: [40, 10],
       from_spire: [36, 3]
     },
     shrines: [{ shrine_id: "shrine_canopy", name: "Canopy Bough Shrine", col: 20, row: 8 }],
@@ -496,7 +496,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
     signs: [{ col: 15, row: 15, text: "Bouncy mushrooms launch you high into the treetops! Attune the Canopy Shrine up center to unlock fast travel." }],
     portals: [
       { target_level: "meadow_hub", target_spawn: "from_canopy", label: "Back to Meadow Hub", col: 2, row: 15 },
-      { target_level: "sunken_ruins", target_spawn: "from_canopy", label: "Descend to Sunken Ruins", col: 43, row: 10 },
+      { target_level: "sunken_ruins", target_spawn: "from_canopy", label: "Descend to Sunken Ruins", col: 42, row: 10 },
       { target_level: "sunlit_spire", target_spawn: "from_canopy", label: "Ascend to Sunlit Spire", col: 37, row: 3 }
     ],
     trinkets: [{ trinket_id: "mossy_compass", col: 40, row: 3 }],
@@ -505,14 +505,14 @@ export const LEVELS_DATA: Record<string, LevelData> = {
     trial: {
       trial_id: "trial_canopy",
       name: "Canopy Breeze",
-      col: 12,
+      col: 13,
       row: 15,
       time_limit: 26,
       rings: [[5, 10], [8, 6], [13, 6], [20, 7], [28, 10], [35, 10]]
     },
     decor: [
       { kind: "tree", col: 5, row: 15 },
-      { kind: "lantern", col: 19, row: 8 },
+      { kind: "lantern", col: 24, row: 8 },
       { kind: "flower", col: 30, row: 15 },
       { kind: "tree", col: 34, row: 15 }
     ]
@@ -547,7 +547,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       start: [3, 15],
       from_meadow: [3, 15],
       shrine: [16, 15],
-      from_canopy: [40, 5],
+      from_canopy: [39, 5],
       from_cavern: [33, 15]
     },
     shrines: [{ shrine_id: "shrine_ruins", name: "Twilight Ruins Shrine", col: 16, row: 15 }],
@@ -555,7 +555,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
     signs: [{ col: 8, row: 15, text: "Ancient twilight arches cradle the valley below. Speak with Luma beside the shrine if you find the Starlight Lantern!" }],
     portals: [
       { target_level: "meadow_hub", target_spawn: "from_ruins", label: "Back to Meadow Hub", col: 2, row: 15 },
-      { target_level: "canopy_cliffs", target_spawn: "from_ruins", label: "Up to Canopy Cliffs", col: 42, row: 5 },
+      { target_level: "canopy_cliffs", target_spawn: "from_ruins", label: "Up to Canopy Cliffs", col: 41, row: 5 },
       { target_level: "starlight_caverns", target_spawn: "from_ruins", label: "Descend to Crystal Hollow", col: 35, row: 15 }
     ],
     trinkets: [
@@ -573,7 +573,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
     },
     decor: [
       { kind: "pillar", col: 5, row: 15 },
-      { kind: "lantern", col: 15, row: 15 },
+      { kind: "lantern", col: 10, row: 15 },
       { kind: "pillar", col: 28, row: 15 },
       { kind: "lantern", col: 38, row: 5 }
     ]
@@ -612,7 +612,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
     shrines: [{ shrine_id: "shrine_spire", name: "Spire Summit Shrine", col: 22, row: 7 }],
     npcs: [{ npc_id: "sol_owl", name: "Sol the Skyweaver", dialogue_id: "sol_owl", col: 6, row: 14, style: "owl" }],
     signs: [
-      { col: 4, row: 14, text: "Welcome to the Sunlit Spire! Speak with Sol the Skyweaver to receive the Leaf Glider." }
+      { col: 3, row: 14, text: "Welcome to the Sunlit Spire! Speak with Sol the Skyweaver to receive the Leaf Glider." }
     ],
     portals: [
       { target_level: "canopy_cliffs", target_spawn: "from_spire", label: "Down to Canopy Cliffs", col: 2, row: 15 }
@@ -631,7 +631,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       rings: [[10, 12], [4, 8], [8, 6], [16, 4], [23, 5], [30, 3], [41, 4]]
     },
     decor: [
-      { kind: "lantern", col: 5, row: 14 },
+      { kind: "lantern", col: 7, row: 14 },
       { kind: "pillar", col: 20, row: 7 },
       { kind: "lantern", col: 24, row: 7 },
       { kind: "flower", col: 38, row: 14 }
@@ -669,7 +669,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       shrine: [15, 15]
     },
     shrines: [{ shrine_id: "shrine_cavern", name: "Crystal Hollow Shrine", col: 14, row: 15 }],
-    npcs: [{ npc_id: "pebble_mole", name: "Pebble the Mole", dialogue_id: "pebble_mole", col: 7, row: 15, style: "willow" }],
+    npcs: [{ npc_id: "pebble_mole", name: "Pebble the Mole", dialogue_id: "pebble_mole", col: 7, row: 15, style: "mole" }],
     signs: [{ col: 5, row: 15, text: "Crystal Hollow! Smash Cracked Boulders [B] with Dash or [C] Acorn Slam, and glide up glowing Wind Updrafts [U]." }],
     portals: [
       { target_level: "sunken_ruins", target_spawn: "from_cavern", label: "Up to Sunken Ruins", col: 2, row: 15 }
@@ -692,7 +692,7 @@ export const LEVELS_DATA: Record<string, LevelData> = {
       rings: [[4, 10], [4, 5], [11, 3], [23, 3], [28, 6], [34, 5], [40, 2]]
     },
     decor: [
-      { kind: "lantern", col: 13, row: 15 },
+      { kind: "lantern", col: 12, row: 15 },
       { kind: "pillar", col: 20, row: 7 },
       { kind: "lantern", col: 38, row: 15 }
     ]

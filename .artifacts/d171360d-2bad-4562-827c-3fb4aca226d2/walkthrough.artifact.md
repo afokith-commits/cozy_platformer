@@ -1,24 +1,24 @@
-# Walkthrough — Sproutbound Visual & Lighting Overhaul
+# Walkthrough — Sproutbound Visual Polish & Alignment Fixes
 
-All art, lighting, animation, and UI visual overhaul features have been successfully applied and verified.
+All targeted visual polish and alignment fixes have been successfully applied and verified.
 
-## Summary of Visual Overhaul Features
+## Summary of Fixes
 
-1. **Atmosphere & Additive Lighting (`src/level.ts`, `src/particles.ts`)**:
-   - Multi-stop atmospheric skies, twinkling night stars, sun/crescent moon with soft halos, and 3 parallax silhouette layers (distant hills, mid-ground ridges, and near hills).
-   - **Cached Additive Glow Pass (`lighter`)**: Pre-baked soft radial light halos around lanterns, attuned shrines, portals, breeze orbs, trinkets, star gems, fireflies, and cave spores.
+1. **Player Silhouette & Shadow (`src/player.ts`)**:
+   - Replaced full-body dark outline box with clean 1px head outline and boots-safe ground shadow (preventing boot/leg overlap).
 
-2. **Autotiled Terrain & Animated Props (`src/level.ts`)**:
-   - Neighbor-aware terrain (`#`) with rounded caps, grass blades, crystal shards, and hanging roots/moss vines.
-   - Wavy double-crest water caustics and swirling updraft ribbons (`U`). All static tile art is baked into `staticCanvas` for zero FPS impact.
+2. **Crisp Bounce Mushroom & Sign (`src/entities.ts`)**:
+   - Replaced blurry half-pixel ellipses with integer-aligned, flush-stemmed mushroom caps and engraved wooden signs.
 
-3. **Expressive Characters & Distinct Trinkets (`src/player.ts`, `src/entities.ts`)**:
-   - Crisp `1px` dark outlines on the Sprout traveler, sage cloak, swaying twin sprout leaves, fluttering twin scarf segments, veined maple Leaf Glider, bubble shield sheen, and translucent dash afterimages.
-   - All 6 NPCs rendered with unique accessories (including Pebble the Mole with hard-hat and headlamp beam), 8 distinct trinket sprites, and faceted star gems.
+3. **Centered Lanterns & Water/Updraft Polish (`src/level.ts`)**:
+   - Centered lantern posts inside their `16px` tiles, fixed updraft streak wrapping, and removed the 1px water crest gap.
 
-4. **Storybook UI & Framed Presentation (`src/ui.ts`, `docs/index.html`)**:
-   - Riveted parchment and wood panels with `Georgia` serif headings, custom vector badge emblems for all 13 badges, an illustrated 5-biome Shrine Map with biome silhouettes and compass rose.
-   - Warm radial backdrop and canvas drop-shadow styling in `docs/index.html`.
+4. **Level Object Realignments (`src/data.ts`)**:
+   - Realigned portals, spawns, signs, and lanterns across `meadow_hub`, `canopy_cliffs`, `sunken_ruins`, `sunlit_spire`, and `starlight_caverns` to prevent overlaps.
+
+5. **UI Panel Shadows & Rounded Focus Rings (`src/ui.ts`)**:
+   - Added a `shadow` flag to `drawPanel()` (`shadow = false` on inner elements) to eliminate heavy inner drop-shadows.
+   - Replaced sharp `strokeRect` focus boxes with smooth `roundRect` focus rings (`drawFocusRing()`).
 
 ## Verification Results
 

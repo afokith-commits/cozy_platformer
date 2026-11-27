@@ -137,16 +137,19 @@ export class BouncePad {
     const press = Math.round(this.squash * 3);
 
     ctx.fillStyle = COLORS.espresso;
-    ctx.fillRect(sx + 5, sy + 7 + press, 6, 8 - press);
+    ctx.fillRect(sx + 5, sy + 9 + press, 6, 7 - press);
     ctx.fillStyle = COLORS.cream;
-    ctx.fillRect(sx + 6, sy + 8 + press, 4, 6 - press);
+    ctx.fillRect(sx + 6, sy + 9 + press, 4, 7 - press);
+
+    ctx.fillStyle = COLORS.espresso;
+    ctx.fillRect(sx + 1, sy + 4 + press, 14, 6);
+    ctx.fillRect(sx + 3, sy + 3 + press, 10, 1);
     ctx.fillStyle = COLORS.coral;
-    ctx.beginPath();
-    ctx.ellipse(sx + 8, sy + 5 + press, 8, 3.5, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(sx + 2, sy + 4 + press, 12, 5);
+    ctx.fillRect(sx + 4, sy + 3 + press, 8, 1);
     ctx.fillStyle = COLORS.cream;
-    ctx.fillRect(sx + 3, sy + 3 + press, 2, 2);
-    ctx.fillRect(sx + 10, sy + 3 + press, 2, 2);
+    ctx.fillRect(sx + 4, sy + 5 + press, 2, 2);
+    ctx.fillRect(sx + 10, sy + 5 + press, 2, 2);
   }
 }
 
@@ -226,16 +229,22 @@ export class Sign {
 
   public render(ctx: CanvasRenderingContext2D, camX: number, camY: number): void {
     const sx = Math.round(this.x - camX - 7);
-    const sy = Math.round(this.y - camY - 14);
+    const sy = Math.round(this.y - camY - 15);
 
     ctx.fillStyle = COLORS.espresso;
-    ctx.fillRect(sx + 5, sy + 7, 4, 8);
+    ctx.fillRect(sx + 5, sy + 9, 4, 6);
+    ctx.fillRect(sx, sy + 1, 14, 9);
+
     ctx.fillStyle = COLORS.wood_dark;
-    ctx.fillRect(sx + 6, sy + 8, 2, 6);
+    ctx.fillRect(sx + 6, sy + 9, 2, 6);
     ctx.fillStyle = COLORS.wood_light;
-    ctx.fillRect(sx, sy + 1, 14, 8);
-    ctx.fillStyle = COLORS.espresso;
-    ctx.fillRect(sx + 2, sy + 3, 10, 1);
+    ctx.fillRect(sx + 1, sy + 2, 12, 7);
+    ctx.fillStyle = COLORS.parchment_dark;
+    ctx.fillRect(sx + 1, sy + 2, 12, 1);
+
+    ctx.fillStyle = COLORS.wood_dark;
+    ctx.fillRect(sx + 3, sy + 4, 8, 1);
+    ctx.fillRect(sx + 3, sy + 6, 6, 1);
   }
 }
 
