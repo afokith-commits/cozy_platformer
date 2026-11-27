@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cozy-platformer"
+version = "1.0.0"
+description = "Sproutbound — A Cozy Micro-Platformer built with Python and Pygame"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "afokith", email = "afokith@gmail.com" }
+]
+keywords = ["game", "pygame", "platformer", "pixel-art", "python", "cozy-game"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment :: Side-Scrolling/Arcade",
+]
+dependencies = [
+    "pygame-ce>=2.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/afokith-commits/cozy_platformer"
+Repository = "https://github.com/afokith-commits/cozy_platformer.git"
+Issues = "https://github.com/afokith-commits/cozy_platformer/issues"
+
+[project.scripts]
+sproutbound = "main:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"

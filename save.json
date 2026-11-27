@@ -25,8 +25,8 @@
   "flags": {
     "willow_gift": true
   },
-  "current_level": "sunken_ruins",
-  "spawn_id": "from_meadow",
+  "current_level": "meadow_hub",
+  "spawn_id": "from_ruins",
   "sfx_volume": 0.65,
   "music_volume": 0.45
 }
