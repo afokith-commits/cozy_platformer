@@ -1,55 +1,57 @@
-# Sproutbound 🌱
+# 🌱 Sproutbound
 
-> A cozy micro-platformer built with Pygame & Python, fully migrated to run directly in the browser via WebAssembly (Pygbag) & GitHub Pages!
+> A cozy 4-chapter micro-platformer written in TypeScript & HTML5 Canvas, running natively in any browser with zero runtime dependencies.
 
 ---
 
-## 🌐 Play Live in Browser (Website Deployment)
+## 🌐 Play Live in Browser
 
-Your game is fully migrated to WebAssembly and ready to play in any web browser at:  
+Play directly in your browser:  
 **`https://afokith-commits.github.io/cozy_platformer/`**
 
 ---
 
-## ⚙️ 1-Minute GitHub Pages Setup (Fixes 404 Error)
+## 🎮 Game Features & Controls
 
-Because GitHub Pages needs to know where `index.html` lives, follow these 2 quick steps on GitHub:
+Explore all 4 regions of the valley: **Meadow Hub**, **Canopy Cliffs**, **Sunken Ruins**, and the **Sunlit Spire**!
 
-1. **Push your changes to GitHub**:
-   ```bash
-   git add .
-   git commit -m "Deploy web version to /docs"
-   git push origin main
-   ```
+### Key Bindings
 
-2. **Set GitHub Pages to `/docs`**:
-   - Go to your repo: `https://github.com/afokith-commits/cozy_platformer`
-   - Click **Settings** → **Pages**.
-   - Under **Build and deployment**:
-     - **Source**: `Deploy from a branch`
-     - **Branch**: `main`
-     - **Folder**: `/docs`
-   - Click **Save**.
-
-Within 1-2 minutes, your website will be live and your friends can open the link and play directly in their browser!
-
----
-
-## 🎮 Controls
-
-| Action | Key / Control |
+| Action | Controls |
 |---|---|
 | **Move Left / Right** | <kbd>A</kbd> / <kbd>D</kbd> or <kbd>←</kbd> / <kbd>→</kbd> |
-| **Jump / Wall Jump** | <kbd>Space</kbd> or <kbd>W</kbd> / <kbd>↑</kbd> |
-| **Interact (NPC / Shrines)** | <kbd>E</kbd> |
-| **Open Inventory** | <kbd>Tab</kbd> |
-| **Pause Menu** | <kbd>Esc</kbd> |
+| **Jump & Leaf Glider** | <kbd>Space</kbd> / <kbd>W</kbd> / <kbd>↑</kbd> *(Hold mid-air to float with Leaf Glider)* |
+| **Breeze Dash** | <kbd>Shift</kbd> / <kbd>X</kbd> |
+| **Interact (NPCs, Signs, Shrines)** | <kbd>E</kbd> or <kbd>Enter</kbd> |
+| **Traveler's Backpack** | <kbd>Tab</kbd> or <kbd>I</kbd> |
+| **World Shrine Map** | <kbd>M</kbd> |
+| **Campaign Journal** | <kbd>J</kbd> |
+| **Pause & Audio Settings** | <kbd>Esc</kbd> |
 
 ---
 
-## 💻 Optional: Running Locally
+## 🛠️ Local Development & Building
 
-If you or your friend also want to play locally on desktop:
+1. **Install dependencies (TypeScript compiler):**
+   ```bash
+   npm install typescript --save-dev
+   ```
 
-- **Windows**: Double-click `run_game.bat` (auto-installs `pygame` and launches).
-- **Mac / Linux**: Run `./run_game.sh` or `python3 main.py`.
+2. **Compile TypeScript (`src/` → `docs/`):**
+   ```bash
+   npx tsc
+   ```
+
+3. **Serve locally:**
+   ```bash
+   npx serve docs
+   # or
+   python3 -m http.server
+   ```
+   Open `http://localhost:3000/docs/` in your browser.
+
+---
+
+## 🚀 Automated GitHub Pages CI/CD
+
+The repository includes a GitHub Action ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)) that automatically compiles TypeScript and deploys `/docs` directly to GitHub Pages on every push to `main`.
